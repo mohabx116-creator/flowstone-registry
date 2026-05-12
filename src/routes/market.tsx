@@ -187,11 +187,46 @@ function MarketPage() {
               </thead>
               <tbody className="divide-y divide-border whitespace-nowrap">
                 {[
-                  { t: "14:42:11", s: "buy", sy: "MST.B4", p: 1024.4, sz: 250, st: "Filled" },
-                  { t: "14:39:02", s: "sell", sy: "GAF.III", p: 512.18, sz: 100, st: "Partial" },
-                  { t: "14:31:48", s: "buy", sy: "RYN.31", p: 98.62, sz: 5000, st: "Filled" },
-                  { t: "14:18:00", s: "sell", sy: "REIT.US", p: 318.5, sz: 80, st: "Filled" },
-                  { t: "14:02:21", s: "buy", sy: "BND.24", p: 1023.1, sz: 120, st: "Filled" },
+                  {
+                    t: "14:42:11",
+                    s: "buy",
+                    sy: "MST.B4",
+                    p: 1024.4,
+                    sz: 250,
+                    st: t("market.status.filled"),
+                  },
+                  {
+                    t: "14:39:02",
+                    s: "sell",
+                    sy: "GAF.III",
+                    p: 512.18,
+                    sz: 100,
+                    st: t("market.status.partial"),
+                  },
+                  {
+                    t: "14:31:48",
+                    s: "buy",
+                    sy: "RYN.31",
+                    p: 98.62,
+                    sz: 5000,
+                    st: t("market.status.filled"),
+                  },
+                  {
+                    t: "14:18:00",
+                    s: "sell",
+                    sy: "REIT.US",
+                    p: 318.5,
+                    sz: 80,
+                    st: t("market.status.filled"),
+                  },
+                  {
+                    t: "14:02:21",
+                    s: "buy",
+                    sy: "BND.24",
+                    p: 1023.1,
+                    sz: 120,
+                    st: t("market.status.filled"),
+                  },
                 ].map((o, i) => (
                   <tr key={i} className="hover:bg-muted/40">
                     <td className="px-5 py-2.5 font-mono text-xs text-muted-foreground">{o.t}</td>
