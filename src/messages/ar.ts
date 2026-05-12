@@ -81,7 +81,7 @@ export const ar: Record<string, string> = {
   "holding.audit": "تدقيق الامتثال",
   "holding.governance": "حقوق الحوكمة",
   "market.modeRegistry": "وضع السجل",
-  "market.modeTokenized": "وضع السوق المرمّز",
+  "market.modeTokenized": "السوق المرمّز",
   "market.title": "سوق الأصول المرمّزة",
   "market.subtitle": "طبقة التسوية الرقمية للأصول المؤسسية المسجّلة.",
   "market.tokenPrice": "سعر الرمز",

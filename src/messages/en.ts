@@ -81,7 +81,7 @@ export const en: Record<string, string> = {
   "holding.audit": "Compliance Audit",
   "holding.governance": "Governance Rights",
   "market.modeRegistry": "Registry Mode",
-  "market.modeTokenized": "Tokenized Market Mode",
+  "market.modeTokenized": "Tokenized Market",
   "market.title": "Tokenized Asset Market",
   "market.subtitle": "On-chain settlement layer for registered institutional assets.",
   "market.tokenPrice": "Token Price",
