@@ -126,7 +126,7 @@ function TransfersPage() {
         <div className="overflow-x-auto -mx-5">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+              <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border whitespace-nowrap">
                 <th className="text-start font-semibold px-5 py-3">{t("transfers.id")}</th>
                 <th className="text-start font-semibold px-5 py-3">{t("transfers.asset")}</th>
                 <th className="text-start font-semibold px-5 py-3">{t("transfers.seller")}</th>
@@ -138,7 +138,7 @@ function TransfersPage() {
                 <th className="text-end font-semibold px-5 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border whitespace-nowrap">
               {filtered.map((tx) => (
                 <tr key={tx.id} className="hover:bg-muted/40 transition-colors">
                   <td className="px-5 py-3 font-mono text-xs text-foreground">{tx.id}</td>

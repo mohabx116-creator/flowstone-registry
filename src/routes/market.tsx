@@ -176,7 +176,7 @@ function MarketPage() {
           <div className="overflow-x-auto -mx-5">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border whitespace-nowrap">
                   <th className="text-start font-semibold px-5 py-2">{t("market.table.time")}</th>
                   <th className="text-start font-semibold px-5 py-2">{t("market.table.side")}</th>
                   <th className="text-start font-semibold px-5 py-2">{t("market.table.symbol")}</th>
@@ -185,7 +185,7 @@ function MarketPage() {
                   <th className="text-end font-semibold px-5 py-2">{t("market.table.status")}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border whitespace-nowrap">
                 {[
                   { t: "14:42:11", s: "buy", sy: "MST.B4", p: 1024.4, sz: 250, st: "Filled" },
                   { t: "14:39:02", s: "sell", sy: "GAF.III", p: 512.18, sz: 100, st: "Partial" },

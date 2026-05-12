@@ -26,7 +26,7 @@ export function StatusBadge({ status }: { status: Variant }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ring-1 ring-inset",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ring-1 ring-inset whitespace-nowrap",
         styles[status],
       )}
     >
@@ -46,7 +46,7 @@ export function PriorityBadge({ priority }: { priority: "high" | "medium" | "low
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ring-1 ring-inset",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ring-1 ring-inset whitespace-nowrap",
         priorityStyles[priority],
       )}
     >
