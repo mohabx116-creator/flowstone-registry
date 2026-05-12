@@ -86,7 +86,7 @@ export function Sidebar({
                 )}
               >
                 {active && (
-                  <span className="absolute inset-y-1.5 ltr:left-0 rtl:right-0 w-[3px] rounded-full bg-secondary" />
+                  <span className="absolute inset-y-1.5 start-0 w-[3px] rounded-full bg-secondary" />
                 )}
                 <Icon size={18} className="shrink-0" />
                 <span>{t(key)}</span>
