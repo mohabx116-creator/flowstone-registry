@@ -43,9 +43,9 @@ export function Sidebar({
         onClick={onClose}
       />
       <aside
+        
         className={cn(
-          "fixed inset-y-0 z-50 w-64 bg-sidebar text-sidebar-foreground border-sidebar-border flex flex-col transition-transform duration-200",
-          "ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l",
+          "fixed inset-y-0 start-0 z-50 w-64 bg-sidebar text-sidebar-foreground border-e border-sidebar-border flex flex-col transition-transform duration-200",
           open ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full",
           "lg:translate-x-0",
         )}
@@ -86,7 +86,7 @@ export function Sidebar({
                 )}
               >
                 {active && (
-                  <span className="absolute inset-y-1.5 ltr:left-0 rtl:right-0 w-[3px] rounded-full bg-secondary" />
+                  <span className="absolute inset-y-1.5 start-0 w-[3px] rounded-full bg-secondary" />
                 )}
                 <Icon size={18} className="shrink-0" />
                 <span>{t(key)}</span>
