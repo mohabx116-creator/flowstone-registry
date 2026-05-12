@@ -18,11 +18,15 @@ export const Route = createFileRoute("/holdings/$id")({
     ],
   }),
   component: HoldingDetail,
-  notFoundComponent: () => (
-    <AppShell>
-      <p className="text-muted-foreground">Holding not found.</p>
-    </AppShell>
-  ),
+  notFoundComponent: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { t } = useI18n();
+    return (
+      <AppShell>
+        <p className="text-muted-foreground">{t("holding.notFound")}</p>
+      </AppShell>
+    );
+  },
 });
 
 function HoldingDetail() {
@@ -50,7 +54,7 @@ function HoldingDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 space-y-6">
-          <SectionCard title="Asset Information">
+          <SectionCard title={t("holding.assetInfo")}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
               <Info label={t("holding.registryId")} value={h.registryId} mono />
               <Info label={t("holding.units")} value={h.units.toLocaleString()} mono />
@@ -86,22 +90,22 @@ function HoldingDetail() {
               <li className="flex items-start gap-3">
                 <ShieldCheck size={16} className="text-success mt-0.5" />
                 <div>
-                  <p className="text-foreground font-medium">KYC current</p>
-                  <p className="text-xs text-muted-foreground">Reverified 12 days ago</p>
+                  <p className="text-foreground font-medium">{t("holding.audit.kycTitle")}</p>
+                  <p className="text-xs text-muted-foreground">{t("holding.audit.kycSub")}</p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <ShieldCheck size={16} className="text-success mt-0.5" />
                 <div>
-                  <p className="text-foreground font-medium">Sanctions clear</p>
-                  <p className="text-xs text-muted-foreground">Daily watchlist sync</p>
+                  <p className="text-foreground font-medium">{t("holding.audit.sanctionsTitle")}</p>
+                  <p className="text-xs text-muted-foreground">{t("holding.audit.sanctionsSub")}</p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <ShieldCheck size={16} className="text-warning-foreground/80 mt-0.5" />
                 <div>
-                  <p className="text-foreground font-medium">Tax cert expires</p>
-                  <p className="text-xs text-muted-foreground">In 47 days</p>
+                  <p className="text-foreground font-medium">{t("holding.audit.taxTitle")}</p>
+                  <p className="text-xs text-muted-foreground">{t("holding.audit.taxSub")}</p>
                 </div>
               </li>
             </ul>
@@ -111,18 +115,18 @@ function HoldingDetail() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-3">
                 <Vote size={14} className="text-secondary" />
-                <span className="flex-1">Voting rights</span>
+                <span className="flex-1">{t("holding.gov.voting")}</span>
                 <span className="font-mono">12,500</span>
               </li>
               <li className="flex items-center gap-3">
                 <Vote size={14} className="text-secondary" />
-                <span className="flex-1">Class A units</span>
+                <span className="flex-1">{t("holding.gov.classA")}</span>
                 <span className="font-mono">100%</span>
               </li>
               <li className="flex items-center gap-3">
                 <Vote size={14} className="text-secondary" />
-                <span className="flex-1">Pre-emption rights</span>
-                <span className="font-mono">Yes</span>
+                <span className="flex-1">{t("holding.gov.preemption")}</span>
+                <span className="font-mono">{t("holding.gov.yes")}</span>
               </li>
             </ul>
           </SectionCard>

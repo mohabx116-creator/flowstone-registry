@@ -59,9 +59,9 @@ function MarketPage() {
           value="$450M"
           trend={{ value: "+1.2%", positive: true }}
         />
-        <StatCard icon={<TrendingUp size={16} />} label="24h Volume" value="$28.4M" />
-        <StatCard icon={<Layers size={16} />} label="Active Pairs" value="14" />
-        <StatCard icon={<ArrowDownUp size={16} />} label="Settled Today" value="312" />
+        <StatCard icon={<TrendingUp size={16} />} label={t("market.stat.vol")} value="$28.4M" />
+        <StatCard icon={<Layers size={16} />} label={t("market.stat.pairs")} value="14" />
+        <StatCard icon={<ArrowDownUp size={16} />} label={t("market.stat.settled")} value="312" />
       </section>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -137,7 +137,7 @@ function MarketPage() {
           <div className="space-y-3 text-sm">
             <div>
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                Asset
+                {t("market.asset")}
               </label>
               <div className="mt-1 h-10 rounded-md border border-border bg-card px-3 flex items-center justify-between">
                 <span className="font-mono text-xs">{active.symbol}</span>
@@ -177,12 +177,12 @@ function MarketPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="text-start font-semibold px-5 py-2">Time</th>
-                  <th className="text-start font-semibold px-5 py-2">Side</th>
-                  <th className="text-start font-semibold px-5 py-2">Symbol</th>
-                  <th className="text-start font-semibold px-5 py-2">Price</th>
-                  <th className="text-start font-semibold px-5 py-2">Size</th>
-                  <th className="text-end font-semibold px-5 py-2">Status</th>
+                  <th className="text-start font-semibold px-5 py-2">{t("market.table.time")}</th>
+                  <th className="text-start font-semibold px-5 py-2">{t("market.table.side")}</th>
+                  <th className="text-start font-semibold px-5 py-2">{t("market.table.symbol")}</th>
+                  <th className="text-start font-semibold px-5 py-2">{t("market.table.price")}</th>
+                  <th className="text-start font-semibold px-5 py-2">{t("market.table.size")}</th>
+                  <th className="text-end font-semibold px-5 py-2">{t("market.table.status")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -216,25 +216,25 @@ function MarketPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm">
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Total Tokenized Value
+              {t("market.portfolio.value")}
             </p>
             <p className="font-display text-xl font-bold tabular-nums mt-1">$48.2M</p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Realized P/L (30d)
+              {t("market.portfolio.pl")}
             </p>
             <p className="font-display text-xl font-bold tabular-nums text-success mt-1">+$1.18M</p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Token Holdings
+              {t("market.portfolio.holdings")}
             </p>
             <p className="font-display text-xl font-bold tabular-nums mt-1">7</p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Settlement Wallets
+              {t("market.portfolio.wallets")}
             </p>
             <p className="font-display text-xl font-bold tabular-nums mt-1">3</p>
           </div>

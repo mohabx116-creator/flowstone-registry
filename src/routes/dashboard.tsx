@@ -60,7 +60,7 @@ function DashboardPage() {
           icon={<Boxes size={16} />}
           label={t("kpi.activeHoldings")}
           value="42"
-          hint="across 14 entities"
+          hint={t("dashboard.hintEntities")}
         />
         <StatCard
           icon={<ArrowLeftRight size={16} />}
@@ -72,7 +72,7 @@ function DashboardPage() {
           icon={<ShieldAlert size={16} />}
           label={t("kpi.complianceCases")}
           value="3"
-          hint="2 high severity"
+          hint={t("dashboard.hintHighSeverity")}
         />
         <StatCard
           icon={<Coins size={16} />}
@@ -86,12 +86,27 @@ function DashboardPage() {
         <div className="lg:col-span-8 space-y-6">
           <SectionCard title={t("dashboard.allocation")}>
             <div className="flex flex-col md:flex-row items-center gap-8">
-              <DonutChart />
+              <DonutChart t={t} />
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                 {[
-                  { label: "Real Estate", pct: "45%", val: "$540M", c: "bg-secondary" },
-                  { label: "Private Equity", pct: "35%", val: "$420M", c: "bg-navy" },
-                  { label: "Debt", pct: "20%", val: "$240M", c: "bg-muted-foreground" },
+                  {
+                    label: t("dashboard.category.realEstate"),
+                    pct: "45%",
+                    val: "$540M",
+                    c: "bg-secondary",
+                  },
+                  {
+                    label: t("dashboard.category.privateEquity"),
+                    pct: "35%",
+                    val: "$420M",
+                    c: "bg-navy",
+                  },
+                  {
+                    label: t("dashboard.category.debt"),
+                    pct: "20%",
+                    val: "$240M",
+                    c: "bg-muted-foreground",
+                  },
                 ].map((s) => (
                   <div
                     key={s.label}
@@ -146,7 +161,7 @@ function DashboardPage() {
                         <StatusBadge status={tx.status} />
                       </td>
                       <td className="px-5 py-3 text-end text-muted-foreground text-xs">
-                        {timeAgo(tx.createdAt)}
+                        {timeAgo(tx.createdAt, t)}
                       </td>
                     </tr>
                   ))}
@@ -185,10 +200,26 @@ function DashboardPage() {
           <SectionCard title={t("dashboard.registryHealth")}>
             <ul className="space-y-3 text-sm">
               {[
-                { label: "Ledger Sync", val: "Healthy", c: "text-success" },
-                { label: "KYC Provider", val: "Operational", c: "text-success" },
-                { label: "Settlement Net", val: "Degraded", c: "text-warning-foreground/80" },
-                { label: "Audit Stream", val: "Healthy", c: "text-success" },
+                {
+                  label: t("dashboard.health.ledger"),
+                  val: t("dashboard.health.healthy"),
+                  c: "text-success",
+                },
+                {
+                  label: t("dashboard.health.kyc"),
+                  val: t("dashboard.health.operational"),
+                  c: "text-success",
+                },
+                {
+                  label: t("dashboard.health.settlement"),
+                  val: t("dashboard.health.degraded"),
+                  c: "text-warning-foreground/80",
+                },
+                {
+                  label: t("dashboard.health.audit"),
+                  val: t("dashboard.health.healthy"),
+                  c: "text-success",
+                },
               ].map((s) => (
                 <li
                   key={s.label}
@@ -240,7 +271,7 @@ function DashboardPage() {
   );
 }
 
-function DonutChart() {
+function DonutChart({ t }: { t: (k: string) => string }) {
   return (
     <div className="relative size-44">
       <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
@@ -285,7 +316,7 @@ function DonutChart() {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-          TOTAL
+          {t("dashboard.chart.total")}
         </span>
         <span className="font-display text-xl font-bold text-foreground">$1.2B</span>
       </div>
@@ -293,11 +324,11 @@ function DonutChart() {
   );
 }
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, t: (k: string) => string) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m}m`;
+  if (m < 60) return `${m}${t("dashboard.time.m")}`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+  if (h < 24) return `${h}${t("dashboard.time.h")}`;
+  return `${Math.floor(h / 24)}${t("dashboard.time.d")}`;
 }

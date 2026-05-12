@@ -19,19 +19,23 @@ export const Route = createFileRoute("/transfers/$id")({
     ],
   }),
   component: TransferDetail,
-  notFoundComponent: () => (
-    <AppShell>
-      <p className="text-muted-foreground">Transfer not found.</p>
-    </AppShell>
-  ),
+  notFoundComponent: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { t } = useI18n();
+    return (
+      <AppShell>
+        <p className="text-muted-foreground">{t("transfer.notFound")}</p>
+      </AppShell>
+    );
+  },
 });
 
-const checks = [
-  { label: "Identity verification (eIDV)", done: true },
-  { label: "Sanctions & watchlist screening", done: true },
-  { label: "Source-of-funds attestation", done: true },
-  { label: "Beneficial ownership disclosure", done: false },
-  { label: "Cross-border tax certification", done: false },
+const checks = (t: (k: string) => string) => [
+  { label: t("transfer.check.idv"), done: true },
+  { label: t("transfer.check.sanctions"), done: true },
+  { label: t("transfer.check.sof"), done: true },
+  { label: t("transfer.check.bo"), done: false },
+  { label: t("transfer.check.tax"), done: false },
 ];
 
 const audit = [
@@ -87,7 +91,7 @@ function TransferDetail() {
 
           <SectionCard title={t("transfer.compliance")}>
             <ul className="space-y-3">
-              {checks.map((c) => (
+              {checks(t).map((c) => (
                 <li key={c.label} className="flex items-center gap-3 text-sm">
                   <span
                     className={`size-5 rounded-full flex items-center justify-center ${
@@ -163,17 +167,18 @@ function TransferDetail() {
                 <Ban size={16} /> {t("common.blockAsset")}
               </button>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              All decisions are recorded immutably to the audit trail and notified to the registry
-              custodian.
-            </p>
+            <p className="mt-4 text-xs text-muted-foreground">{t("transfer.decision.text")}</p>
           </SectionCard>
 
-          <SectionCard title="Routing">
+          <SectionCard title={t("transfer.routing.title")}>
             <ul className="space-y-3 text-sm">
-              <Field label="Compliance Desk" value="Desk B · APAC" inline />
-              <Field label="Custodian" value="Helvetia Trust" inline />
-              <Field label="Created" value={new Date(tx.createdAt).toLocaleString(locale)} inline />
+              <Field label={t("transfer.routing.desk")} value="Desk B · APAC" inline />
+              <Field label={t("transfer.routing.custodian")} value="Helvetia Trust" inline />
+              <Field
+                label={t("common.created")}
+                value={new Date(tx.createdAt).toLocaleString(locale)}
+                inline
+              />
             </ul>
           </SectionCard>
         </div>

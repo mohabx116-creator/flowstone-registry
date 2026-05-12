@@ -74,7 +74,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 key={key + to}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 to={to as any}
-                params={params}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                params={params as any}
                 onClick={onClose}
                 className={cn(
                   "group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors relative",
