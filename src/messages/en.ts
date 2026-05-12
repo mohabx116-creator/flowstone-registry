@@ -97,8 +97,9 @@ export const en: Record<string, string> = {
   "market.placeOrder": "Place Order",
   "footer.disclaimer":
     "This is a self-initiated frontend case study demo built to demonstrate registry transfer and tokenized asset UI workflows.",
-  "market.status.filled": "Filled",
-  "market.status.partial": "Partial",
+  "market.status.settled": "Settled",
+  "market.status.processing": "Processing",
+  "market.status.pending": "Pending",
   "lang.label": "Language",
   "theme.light": "Light",
   "theme.dark": "Dark",

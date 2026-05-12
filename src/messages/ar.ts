@@ -97,8 +97,9 @@ export const ar: Record<string, string> = {
   "market.placeOrder": "تنفيذ الأمر",
   "footer.disclaimer":
     "هذا عرض توضيحي ذاتي للواجهة الأمامية أُعدّ لإظهار سير عمل تحويلات السجل وواجهات الأصول المرمّزة.",
-  "market.status.filled": "مكتمل",
-  "market.status.partial": "جزئي",
+  "market.status.settled": "تمت التسوية",
+  "market.status.processing": "قيد المعالجة",
+  "market.status.pending": "معلق",
   "lang.label": "اللغة",
   "theme.light": "فاتح",
   "theme.dark": "داكن",
