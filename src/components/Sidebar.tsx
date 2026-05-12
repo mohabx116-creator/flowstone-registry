@@ -43,7 +43,7 @@ export function Sidebar({
         onClick={onClose}
       />
       <aside
-        dir-aware="true"
+        
         className={cn(
           "fixed inset-y-0 start-0 z-50 w-64 bg-sidebar text-sidebar-foreground border-e border-sidebar-border flex flex-col transition-transform duration-200",
           open ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full",
