@@ -67,12 +67,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "AssetFlow Registry: a frontend case study demo for institutional real-world asset registry and tokenization workflows.",
       },
-      { property: "og:title", content: "AssetFlow Registry" },
+      { property: "og:title", content: "AssetFlow Registry — Institutional RWA Platform" },
       {
         property: "og:description",
         content: "Registry transfers, compliance review, and tokenized markets — frontend demo.",
       },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "AssetFlow Registry — Institutional RWA Platform" },
+      { name: "description", content: "AssetFlow Explorer is a frontend demo for a real-world asset registry and tokenization platform." },
+      { property: "og:description", content: "AssetFlow Explorer is a frontend demo for a real-world asset registry and tokenization platform." },
+      { name: "twitter:description", content: "AssetFlow Explorer is a frontend demo for a real-world asset registry and tokenization platform." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bdc9b916-3b3f-4769-8b0b-85519da494e0/id-preview-93e1e7db--e2bfe335-e7eb-4370-a824-6df9cc4da2fd.lovable.app-1778591245426.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bdc9b916-3b3f-4769-8b0b-85519da494e0/id-preview-93e1e7db--e2bfe335-e7eb-4370-a824-6df9cc4da2fd.lovable.app-1778591245426.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
