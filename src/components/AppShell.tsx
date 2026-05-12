@@ -10,7 +10,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar open={open} onClose={() => setOpen(false)} />
-      <div className="lg:ltr:pl-64 lg:rtl:pr-64">
+      <div className="lg:ps-64">
         <Topbar onMenu={() => setOpen(true)} />
         <main className="px-4 md:px-6 lg:px-8 py-6 max-w-[1440px] mx-auto space-y-8">
           {children}
