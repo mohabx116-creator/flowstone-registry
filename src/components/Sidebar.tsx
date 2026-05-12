@@ -12,23 +12,22 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const items = [
+const items: Array<{
+  to: string;
+  params?: Record<string, string>;
+  icon: React.ElementType;
+  key: string;
+}> = [
   { to: "/dashboard", icon: LayoutDashboard, key: "nav.dashboard" },
   { to: "/transfers", icon: ArrowLeftRight, key: "nav.transfers" },
-  { to: "/holdings/HLD-001", icon: Wallet, key: "nav.holdings" },
+  { to: "/holdings/$id", params: { id: "HLD-001" }, icon: Wallet, key: "nav.holdings" },
   { to: "/market", icon: CandlestickChart, key: "nav.market" },
   { to: "/dashboard", icon: ShieldCheck, key: "nav.compliance" },
   { to: "/dashboard", icon: Database, key: "nav.registry" },
   { to: "/dashboard", icon: Settings, key: "nav.settings" },
-] as const;
+];
 
-export function Sidebar({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -51,9 +50,7 @@ export function Sidebar({
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-6">
           <div>
-            <h1 className="font-display text-xl font-bold text-white">
-              {t("brand.name")}
-            </h1>
+            <h1 className="font-display text-xl font-bold text-white">{t("brand.name")}</h1>
             <p className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/70 mt-1">
               {t("brand.tagline")}
             </p>
@@ -68,14 +65,16 @@ export function Sidebar({
         </div>
 
         <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
-          {items.map(({ to, icon: Icon, key }) => {
+          {items.map(({ to, params, icon: Icon, key }) => {
             const active =
               pathname === to ||
               (to !== "/dashboard" && pathname.startsWith(to.split("/").slice(0, 2).join("/")));
             return (
               <Link
                 key={key + to}
-                to={to}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                to={to as any}
+                params={params}
                 onClick={onClose}
                 className={cn(
                   "group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors relative",

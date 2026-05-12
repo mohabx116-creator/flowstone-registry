@@ -13,7 +13,7 @@ export const Route = createFileRoute("/holdings/$id")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.name ?? "Holding"} — AssetFlow` },
+      { title: `${loaderData?.name ?? "Holding"} — FlowStone` },
       { name: "description", content: "Holding detail with registry, compliance and governance." },
     ],
   }),

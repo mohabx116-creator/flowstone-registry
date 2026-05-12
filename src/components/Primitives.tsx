@@ -24,9 +24,7 @@ export function StatCard({
           <span
             className={cn(
               "text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded",
-              trend.positive
-                ? "bg-success/15 text-success"
-                : "bg-destructive/15 text-destructive",
+              trend.positive ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive",
             )}
           >
             {trend.value}
@@ -82,9 +80,7 @@ export function PageHeader({
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div>
-        <h1 className="font-display text-2xl md:text-3xl font-semibold text-foreground">
-          {title}
-        </h1>
+        <h1 className="font-display text-2xl md:text-3xl font-semibold text-foreground">{title}</h1>
         {subtitle && <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

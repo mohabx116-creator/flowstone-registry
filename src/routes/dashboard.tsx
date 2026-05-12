@@ -13,17 +13,12 @@ import { AppShell } from "@/components/AppShell";
 import { PageHeader, SectionCard, StatCard } from "@/components/Primitives";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useI18n } from "@/lib/i18n";
-import {
-  complianceAlerts,
-  fmtCurrency,
-  tokenized,
-  transfers,
-} from "@/lib/mock-data";
+import { complianceAlerts, fmtCurrency, tokenized, transfers } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — AssetFlow Registry" },
+      { title: "Dashboard — FlowStone Registry" },
       {
         name: "description",
         content: "Institutional RWA dashboard — KPIs, transfers, compliance and tokenized assets.",
@@ -219,18 +214,13 @@ function DashboardPage() {
           >
             <ul className="space-y-3">
               {tokenized.slice(0, 3).map((tk) => (
-                <li
-                  key={tk.id}
-                  className="flex items-center justify-between text-sm"
-                >
+                <li key={tk.id} className="flex items-center justify-between text-sm">
                   <div>
                     <p className="font-mono text-xs text-muted-foreground">{tk.symbol}</p>
                     <p className="text-foreground font-medium">{tk.name}</p>
                   </div>
                   <div className="text-end">
-                    <p className="font-mono tabular-nums text-foreground">
-                      ${tk.price.toFixed(2)}
-                    </p>
+                    <p className="font-mono tabular-nums text-foreground">${tk.price.toFixed(2)}</p>
                     <p
                       className={`text-xs font-semibold ${
                         tk.change >= 0 ? "text-success" : "text-destructive"
@@ -254,10 +244,44 @@ function DonutChart() {
   return (
     <div className="relative size-44">
       <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-        <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="var(--color-border)" strokeWidth="3" />
-        <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="var(--color-secondary)" strokeWidth="3" strokeDasharray="45 55" strokeDashoffset="0" />
-        <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="var(--color-navy)" strokeWidth="3" strokeDasharray="35 65" strokeDashoffset="-45" />
-        <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="var(--color-muted-foreground)" strokeWidth="3" strokeDasharray="20 80" strokeDashoffset="-80" />
+        <circle
+          cx="18"
+          cy="18"
+          r="15.915"
+          fill="transparent"
+          stroke="var(--color-border)"
+          strokeWidth="3"
+        />
+        <circle
+          cx="18"
+          cy="18"
+          r="15.915"
+          fill="transparent"
+          stroke="var(--color-secondary)"
+          strokeWidth="3"
+          strokeDasharray="45 55"
+          strokeDashoffset="0"
+        />
+        <circle
+          cx="18"
+          cy="18"
+          r="15.915"
+          fill="transparent"
+          stroke="var(--color-navy)"
+          strokeWidth="3"
+          strokeDasharray="35 65"
+          strokeDashoffset="-45"
+        />
+        <circle
+          cx="18"
+          cy="18"
+          r="15.915"
+          fill="transparent"
+          stroke="var(--color-muted-foreground)"
+          strokeWidth="3"
+          strokeDasharray="20 80"
+          strokeDashoffset="-80"
+        />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">

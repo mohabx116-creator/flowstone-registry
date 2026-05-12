@@ -10,7 +10,7 @@ import { Coins, TrendingUp, Layers } from "lucide-react";
 export const Route = createFileRoute("/market")({
   head: () => ({
     meta: [
-      { title: "Tokenized Market — AssetFlow" },
+      { title: "Tokenized Market — FlowStone" },
       {
         name: "description",
         content: "On-chain settlement layer for registered institutional assets.",
@@ -53,7 +53,12 @@ function MarketPage() {
       />
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Coins size={16} />} label={t("kpi.tokenizedAssets")} value="$450M" trend={{ value: "+1.2%", positive: true }} />
+        <StatCard
+          icon={<Coins size={16} />}
+          label={t("kpi.tokenizedAssets")}
+          value="$450M"
+          trend={{ value: "+1.2%", positive: true }}
+        />
         <StatCard icon={<TrendingUp size={16} />} label="24h Volume" value="$28.4M" />
         <StatCard icon={<Layers size={16} />} label="Active Pairs" value="14" />
         <StatCard icon={<ArrowDownUp size={16} />} label="Settled Today" value="312" />
@@ -190,7 +195,9 @@ function MarketPage() {
                 ].map((o, i) => (
                   <tr key={i} className="hover:bg-muted/40">
                     <td className="px-5 py-2.5 font-mono text-xs text-muted-foreground">{o.t}</td>
-                    <td className={`px-5 py-2.5 text-xs font-semibold uppercase ${o.s === "buy" ? "text-success" : "text-destructive"}`}>
+                    <td
+                      className={`px-5 py-2.5 text-xs font-semibold uppercase ${o.s === "buy" ? "text-success" : "text-destructive"}`}
+                    >
                       {o.s}
                     </td>
                     <td className="px-5 py-2.5 font-mono text-xs">{o.sy}</td>

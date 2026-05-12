@@ -11,7 +11,7 @@ import { ArrowLeftRight, AlertTriangle, Clock, DollarSign } from "lucide-react";
 export const Route = createFileRoute("/transfers")({
   head: () => ({
     meta: [
-      { title: "Registry Transfer Hub — AssetFlow" },
+      { title: "Registry Transfer Hub — FlowStone" },
       {
         name: "description",
         content: "Review, route and settle institutional ownership transfers.",
@@ -41,7 +41,10 @@ function TransfersPage() {
     return transfers.filter((tx) => {
       if (status !== "all" && tx.status !== status) return false;
       if (priority !== "all" && tx.priority !== priority) return false;
-      if (q && !`${tx.id} ${tx.asset} ${tx.seller} ${tx.buyer}`.toLowerCase().includes(q.toLowerCase()))
+      if (
+        q &&
+        !`${tx.id} ${tx.asset} ${tx.seller} ${tx.buyer}`.toLowerCase().includes(q.toLowerCase())
+      )
         return false;
       return true;
     });
@@ -56,16 +59,36 @@ function TransfersPage() {
       <PageHeader title={t("transfers.title")} subtitle={t("transfers.subtitle")} />
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<ArrowLeftRight size={16} />} label={t("transfers.summary.open")} value={String(open)} />
-        <StatCard icon={<DollarSign size={16} />} label={t("transfers.summary.value")} value={fmtCurrency(aggValue)} />
-        <StatCard icon={<Clock size={16} />} label={t("transfers.summary.avgTime")} value="18h 42m" />
-        <StatCard icon={<AlertTriangle size={16} />} label={t("transfers.summary.flagged")} value={String(flagged)} trend={{ value: "Review", positive: false }} />
+        <StatCard
+          icon={<ArrowLeftRight size={16} />}
+          label={t("transfers.summary.open")}
+          value={String(open)}
+        />
+        <StatCard
+          icon={<DollarSign size={16} />}
+          label={t("transfers.summary.value")}
+          value={fmtCurrency(aggValue)}
+        />
+        <StatCard
+          icon={<Clock size={16} />}
+          label={t("transfers.summary.avgTime")}
+          value="18h 42m"
+        />
+        <StatCard
+          icon={<AlertTriangle size={16} />}
+          label={t("transfers.summary.flagged")}
+          value={String(flagged)}
+          trend={{ value: "Review", positive: false }}
+        />
       </section>
 
       <SectionCard className="overflow-hidden">
         <div className="flex flex-col md:flex-row gap-3 mb-5">
           <div className="relative flex-1">
-            <Search size={16} className="absolute top-1/2 -translate-y-1/2 ltr:left-3 rtl:right-3 text-muted-foreground" />
+            <Search
+              size={16}
+              className="absolute top-1/2 -translate-y-1/2 ltr:left-3 rtl:right-3 text-muted-foreground"
+            />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -123,8 +146,12 @@ function TransfersPage() {
                   <td className="px-5 py-3 text-muted-foreground">{tx.seller}</td>
                   <td className="px-5 py-3 text-muted-foreground">{tx.buyer}</td>
                   <td className="px-5 py-3 font-mono tabular-nums">{fmtCurrency(tx.value)}</td>
-                  <td className="px-5 py-3"><StatusBadge status={tx.status} /></td>
-                  <td className="px-5 py-3"><PriorityBadge priority={tx.priority} /></td>
+                  <td className="px-5 py-3">
+                    <StatusBadge status={tx.status} />
+                  </td>
+                  <td className="px-5 py-3">
+                    <PriorityBadge priority={tx.priority} />
+                  </td>
                   <td className="px-5 py-3 text-muted-foreground text-xs">
                     {new Date(tx.createdAt).toLocaleDateString()}
                   </td>
@@ -142,7 +169,7 @@ function TransfersPage() {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={9} className="text-center text-muted-foreground py-10">
-                    No transfers match the current filters.
+                    {t("common.noResults")}
                   </td>
                 </tr>
               )}

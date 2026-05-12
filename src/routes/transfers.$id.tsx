@@ -1,13 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import {
-  Check,
-  X,
-  HelpCircle,
-  Ban,
-  FileText,
-  Download,
-  ArrowLeft,
-} from "lucide-react";
+import { Check, X, HelpCircle, Ban, FileText, Download, ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, SectionCard } from "@/components/Primitives";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -22,7 +14,7 @@ export const Route = createFileRoute("/transfers/$id")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.id ?? "Transfer"} — AssetFlow` },
+      { title: `${loaderData?.id ?? "Transfer"} — FlowStone` },
       { name: "description", content: "Transfer case detail and decision panel." },
     ],
   }),
@@ -82,7 +74,11 @@ function TransferDetail() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SectionCard title={t("transfer.sellerDetails")}>
-              <PartyCard name={tx.seller} role="LEI 549300A1B2C3D4E5F6G7" jurisdiction="Delaware, USA" />
+              <PartyCard
+                name={tx.seller}
+                role="LEI 549300A1B2C3D4E5F6G7"
+                jurisdiction="Delaware, USA"
+              />
             </SectionCard>
             <SectionCard title={t("transfer.buyerDetails")}>
               <PartyCard name={tx.buyer} role="LEI 213800Z9Y8X7W6V5U4T3" jurisdiction="Singapore" />
@@ -98,9 +94,15 @@ function TransferDetail() {
                       c.done ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {c.done ? <Check size={12} /> : <span className="size-1.5 rounded-full bg-current" />}
+                    {c.done ? (
+                      <Check size={12} />
+                    ) : (
+                      <span className="size-1.5 rounded-full bg-current" />
+                    )}
                   </span>
-                  <span className={c.done ? "text-foreground" : "text-muted-foreground"}>{c.label}</span>
+                  <span className={c.done ? "text-foreground" : "text-muted-foreground"}>
+                    {c.label}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -114,10 +116,7 @@ function TransferDetail() {
                 "KYC Buyer Pack.zip",
                 "Tax Residency Cert.pdf",
               ].map((f) => (
-                <li
-                  key={f}
-                  className="flex items-center gap-3 rounded-md border border-border p-3"
-                >
+                <li key={f} className="flex items-center gap-3 rounded-md border border-border p-3">
                   <FileText size={16} className="text-secondary" />
                   <span className="text-sm flex-1 truncate">{f}</span>
                   <button className="text-muted-foreground hover:text-foreground">
@@ -165,7 +164,8 @@ function TransferDetail() {
               </button>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              All decisions are recorded immutably to the audit trail and notified to the registry custodian.
+              All decisions are recorded immutably to the audit trail and notified to the registry
+              custodian.
             </p>
           </SectionCard>
 
@@ -216,11 +216,23 @@ function Field({
   );
 }
 
-function PartyCard({ name, role, jurisdiction }: { name: string; role: string; jurisdiction: string }) {
+function PartyCard({
+  name,
+  role,
+  jurisdiction,
+}: {
+  name: string;
+  role: string;
+  jurisdiction: string;
+}) {
   return (
     <div className="flex items-start gap-3">
       <div className="size-10 rounded-md bg-secondary/10 text-secondary flex items-center justify-center font-bold">
-        {name.split(" ").map((s) => s[0]).slice(0, 2).join("")}
+        {name
+          .split(" ")
+          .map((s) => s[0])
+          .slice(0, 2)
+          .join("")}
       </div>
       <div className="min-w-0">
         <p className="text-foreground font-semibold text-sm">{name}</p>

@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
         <footer className="px-4 md:px-6 lg:px-8 py-6 text-xs text-muted-foreground border-t border-border mt-12">
           <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row gap-2 justify-between">
-            <p>© AssetFlow Registry — Demo</p>
+            <p>© FlowStone Registry — Demo</p>
             <p className="md:max-w-2xl md:text-end">{t("footer.disclaimer")}</p>
           </div>
         </footer>
