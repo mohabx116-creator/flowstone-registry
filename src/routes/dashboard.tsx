@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
   ArrowLeftRight,
@@ -12,6 +13,7 @@ import {
 import { AppShell } from '@/components/AppShell';
 import { PageHeader, SectionCard, StatCard } from '@/components/Primitives';
 import { StatusBadge } from '@/components/StatusBadge';
+import { Asset, AssetType, getAssets } from '@/lib/assets-api';
 import { requireAuth } from '@/lib/auth-guard';
 import { useI18n } from '@/lib/i18n';
 import {
@@ -20,6 +22,37 @@ import {
   tokenized,
   transfers,
 } from '@/lib/mock-data';
+
+const typeMap: Record<AssetType, { key: string; color: string }> = {
+  REAL_ESTATE: {
+    key: 'dashboard.category.realEstate',
+    color: 'var(--color-secondary)',
+  },
+  EQUITY: {
+    key: 'dashboard.category.privateEquity',
+    color: 'var(--color-navy)',
+  },
+  FIXED_INCOME: {
+    key: 'dashboard.category.debt',
+    color: 'var(--color-muted-foreground)',
+  },
+  COMMODITY: { key: 'Commodities', color: '#f59e0b' },
+  OTHER: { key: 'Other', color: '#6b7280' },
+};
+
+function formatStatValue(value: number, currency = 'USD') {
+  if (value >= 1_000_000_000) {
+    return `$${(value / 1_000_000_000).toFixed(1)}B`;
+  }
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: requireAuth,
@@ -38,7 +71,110 @@ export const Route = createFileRoute('/dashboard')({
 
 function DashboardPage() {
   const { t } = useI18n();
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAssets()
+      .then(setAssets)
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes('401') || msg.includes('Unauthorized')) {
+          setError('Your session has expired. Please sign in again.');
+        } else {
+          setError('Unable to load assets right now.');
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const recent = transfers.slice(0, 5);
+
+  const totalValuation = assets.reduce((acc, a) => acc + a.valuation, 0);
+  const tokenizedValuation = assets
+    .filter((a) => a.tokenizationStatus === 'TOKENIZED')
+    .reduce((acc, a) => acc + a.valuation, 0);
+
+  const allocation = assets.reduce(
+    (acc, a) => {
+      acc[a.type] = (acc[a.type] || 0) + a.valuation;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+
+  const chartData = Object.entries(allocation).map(([type, value]) => ({
+    type: type as AssetType,
+    value,
+    color: typeMap[type as AssetType]?.color || 'var(--color-muted)',
+    labelKey: typeMap[type as AssetType]?.key || type,
+  }));
+
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-secondary border-t-transparent" />
+          <p className="font-display text-lg font-medium text-muted-foreground">
+            Initializing Asset Stream...
+          </p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppShell>
+        <div className="flex h-[60vh] flex-col items-center justify-center gap-4 text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <ShieldAlert size={32} />
+          </div>
+          <div>
+            <h2 className="font-display text-xl font-bold text-foreground">
+              Connectivity Issue
+            </h2>
+            <p className="mt-1 text-muted-foreground">{error}</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 rounded-md bg-secondary px-6 py-2 text-sm font-semibold text-secondary-foreground transition hover:opacity-90"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (assets.length === 0) {
+    return (
+      <AppShell>
+        <PageHeader
+          title={t('dashboard.title')}
+          subtitle={t('dashboard.subtitle')}
+        />
+        <div className="mt-12 flex h-[40vh] flex-col items-center justify-center gap-6 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-muted/30 text-muted-foreground/40">
+            <Boxes size={48} />
+          </div>
+          <div>
+            <h2 className="font-display text-2xl font-bold text-foreground">
+              No Registered Assets
+            </h2>
+            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+              The institutional registry is currently empty. Start by registering
+              your first real-world asset to manage holdings and transfers.
+            </p>
+          </div>
+          <button className="inline-flex h-11 items-center gap-2 rounded-md bg-secondary px-8 text-sm font-semibold uppercase tracking-wider text-secondary-foreground shadow-lg shadow-secondary/20 transition hover:opacity-90">
+            <PlusCircle size={18} /> {t('common.registerAsset')}
+          </button>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -61,13 +197,13 @@ function DashboardPage() {
         <StatCard
           icon={<Wallet size={16} />}
           label={t('kpi.totalAssets')}
-          value="$1.2B"
-          trend={{ value: '+4.2%', positive: true }}
+          value={formatStatValue(totalValuation)}
+          trend={{ value: '+0.0%', positive: true }}
         />
         <StatCard
           icon={<Boxes size={16} />}
           label={t('kpi.activeHoldings')}
-          value="42"
+          value={assets.length.toString()}
           hint={t('dashboard.hintEntities')}
         />
         <StatCard
@@ -85,8 +221,14 @@ function DashboardPage() {
         <StatCard
           icon={<Coins size={16} />}
           label={t('kpi.tokenizedAssets')}
-          value="$450M"
-          trend={{ value: '37.5%', positive: true }}
+          value={formatStatValue(tokenizedValuation)}
+          trend={{
+            value:
+              totalValuation > 0
+                ? `${((tokenizedValuation / totalValuation) * 100).toFixed(1)}%`
+                : '0%',
+            positive: true,
+          }}
         />
       </section>
 
@@ -94,40 +236,26 @@ function DashboardPage() {
         <div className="space-y-6 lg:col-span-8">
           <SectionCard title={t('dashboard.allocation')}>
             <div className="flex flex-col items-center gap-8 md:flex-row">
-              <DonutChart t={t} />
+              <DonutChart t={t} data={chartData} />
               <div className="grid w-full flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
-                {[
-                  {
-                    label: t('dashboard.category.realEstate'),
-                    pct: '45%',
-                    val: '$540M',
-                    c: 'bg-secondary',
-                  },
-                  {
-                    label: t('dashboard.category.privateEquity'),
-                    pct: '35%',
-                    val: '$420M',
-                    c: 'bg-navy',
-                  },
-                  {
-                    label: t('dashboard.category.debt'),
-                    pct: '20%',
-                    val: '$240M',
-                    c: 'bg-muted-foreground',
-                  },
-                ].map((s) => (
+                {chartData.map((s) => (
                   <div
-                    key={s.label}
+                    key={s.labelKey}
                     className="rounded-md border-secondary bg-muted/40 p-3 ltr:border-l-4 rtl:border-r-4"
                   >
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      {s.label}
+                      {t(s.labelKey)}
                     </p>
                     <p className="mt-1 font-display text-lg font-semibold text-foreground">
-                      {s.pct}
+                      {((s.value / totalValuation) * 100).toFixed(0)}%
                     </p>
-                    <p className="text-xs text-muted-foreground">{s.val}</p>
-                    <div className={`mt-2 h-1 rounded-full ${s.c} opacity-80`} />
+                    <p className="text-xs text-muted-foreground">
+                      {formatStatValue(s.value)}
+                    </p>
+                    <div
+                      className="mt-2 h-1 rounded-full opacity-80"
+                      style={{ backgroundColor: s.color }}
+                    />
                   </div>
                 ))}
               </div>
@@ -307,7 +435,16 @@ function DashboardPage() {
   );
 }
 
-function DonutChart({ t }: { t: (k: string) => string }) {
+function DonutChart({
+  t,
+  data,
+}: {
+  t: (k: string) => string;
+  data: { labelKey: string; value: number; color: string }[];
+}) {
+  const total = data.reduce((acc, curr) => acc + curr.value, 0);
+  let cumulativePercentage = 0;
+
   return (
     <div className="relative size-44">
       <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
@@ -319,44 +456,35 @@ function DonutChart({ t }: { t: (k: string) => string }) {
           stroke="var(--color-border)"
           strokeWidth="3"
         />
-        <circle
-          cx="18"
-          cy="18"
-          r="15.915"
-          fill="transparent"
-          stroke="var(--color-secondary)"
-          strokeWidth="3"
-          strokeDasharray="45 55"
-          strokeDashoffset="0"
-        />
-        <circle
-          cx="18"
-          cy="18"
-          r="15.915"
-          fill="transparent"
-          stroke="var(--color-navy)"
-          strokeWidth="3"
-          strokeDasharray="35 65"
-          strokeDashoffset="-45"
-        />
-        <circle
-          cx="18"
-          cy="18"
-          r="15.915"
-          fill="transparent"
-          stroke="var(--color-muted-foreground)"
-          strokeWidth="3"
-          strokeDasharray="20 80"
-          strokeDashoffset="-80"
-        />
+        {data.map((item, idx) => {
+          const percentage = (item.value / total) * 100;
+          const strokeDasharray = `${percentage} ${100 - percentage}`;
+          const strokeDashoffset = -cumulativePercentage;
+          cumulativePercentage += percentage;
+
+          return (
+            <circle
+              key={idx}
+              cx="18"
+              cy="18"
+              r="15.915"
+              fill="transparent"
+              stroke={item.color}
+              strokeWidth="3"
+              strokeDasharray={strokeDasharray}
+              strokeDashoffset={strokeDashoffset}
+              className="transition-all duration-500 ease-in-out"
+            />
+          );
+        })}
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center px-2">
           {t('dashboard.chart.total')}
         </span>
         <span className="font-display text-xl font-bold text-foreground">
-          $1.2B
+          {formatStatValue(total)}
         </span>
       </div>
     </div>
