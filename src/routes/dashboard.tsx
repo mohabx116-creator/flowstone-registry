@@ -202,7 +202,7 @@ function DashboardPage() {
         />
         <StatCard
           icon={<Boxes size={16} />}
-          label={t('kpi.activeHoldings')}
+          label={t('kpi.registeredAssets')}
           value={assets.length.toString()}
           hint={t('dashboard.hintEntities')}
         />

@@ -41,6 +41,7 @@ export const ar: Record<string, string> = {
   "status.completed": "مكتمل",
   "kpi.totalAssets": "إجمالي الأصول",
   "kpi.activeHoldings": "الحيازات النشطة",
+  "kpi.registeredAssets": "الأصول المسجلة",
   "kpi.pendingTransfers": "التحويلات قيد المراجعة",
   "kpi.complianceCases": "قضايا الامتثال",
   "kpi.tokenizedAssets": "الأصول المرمّزة",

@@ -41,6 +41,7 @@ export const en: Record<string, string> = {
   "status.completed": "Completed",
   "kpi.totalAssets": "Total Assets",
   "kpi.activeHoldings": "Active Holdings",
+  "kpi.registeredAssets": "Registered Assets",
   "kpi.pendingTransfers": "Pending Transfers",
   "kpi.complianceCases": "Compliance Cases",
   "kpi.tokenizedAssets": "Tokenized Assets",
