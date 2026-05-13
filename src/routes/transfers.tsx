@@ -1,14 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  AlertTriangle,
+  ArrowLeftRight,
+  Clock,
+  DollarSign,
+  Filter,
+  Search,
+} from "lucide-react";
 import { useMemo, useState } from "react";
-import { Filter, Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, SectionCard, StatCard } from "@/components/Primitives";
 import { PriorityBadge, StatusBadge } from "@/components/StatusBadge";
+import { requireAuth } from "@/lib/auth-guard";
 import { useI18n } from "@/lib/i18n";
 import { fmtCurrency, transfers, type TransferStatus } from "@/lib/mock-data";
-import { ArrowLeftRight, AlertTriangle, Clock, DollarSign } from "lucide-react";
 
 export const Route = createFileRoute("/transfers")({
+  beforeLoad: requireAuth,
   head: () => ({
     meta: [
       { title: "Registry Transfer Hub — FlowStone" },
@@ -35,45 +43,71 @@ function TransfersPage() {
   const { t } = useI18n();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("all");
-  const [priority, setPriority] = useState<"all" | "high" | "medium" | "low">("all");
+  const [priority, setPriority] = useState<"all" | "high" | "medium" | "low">(
+    "all",
+  );
 
   const filtered = useMemo(() => {
     return transfers.filter((tx) => {
-      if (status !== "all" && tx.status !== status) return false;
-      if (priority !== "all" && tx.priority !== priority) return false;
+      if (status !== "all" && tx.status !== status) {
+        return false;
+      }
+
+      if (priority !== "all" && tx.priority !== priority) {
+        return false;
+      }
+
       if (
         q &&
-        !`${tx.id} ${tx.asset} ${tx.seller} ${tx.buyer}`.toLowerCase().includes(q.toLowerCase())
-      )
+        !`${tx.id} ${tx.asset} ${tx.seller} ${tx.buyer}`
+          .toLowerCase()
+          .includes(q.toLowerCase())
+      ) {
         return false;
+      }
+
       return true;
     });
   }, [q, status, priority]);
 
-  const open = transfers.filter((t) => t.status === "pending").length;
-  const aggValue = transfers.reduce((a, t) => a + t.value, 0);
-  const flagged = transfers.filter((t) => t.status === "blocked" || t.priority === "high").length;
+  const open = transfers.filter((transfer) => transfer.status === "pending").length;
+
+  const aggValue = transfers.reduce(
+    (total, transfer) => total + transfer.value,
+    0,
+  );
+
+  const flagged = transfers.filter(
+    (transfer) =>
+      transfer.status === "blocked" || transfer.priority === "high",
+  ).length;
 
   return (
     <AppShell>
-      <PageHeader title={t("transfers.title")} subtitle={t("transfers.subtitle")} />
+      <PageHeader
+        title={t("transfers.title")}
+        subtitle={t("transfers.subtitle")}
+      />
 
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           icon={<ArrowLeftRight size={16} />}
           label={t("transfers.summary.open")}
           value={String(open)}
         />
+
         <StatCard
           icon={<DollarSign size={16} />}
           label={t("transfers.summary.value")}
           value={fmtCurrency(aggValue)}
         />
+
         <StatCard
           icon={<Clock size={16} />}
           label={t("transfers.summary.avgTime")}
           value="18h 42m"
         />
+
         <StatCard
           icon={<AlertTriangle size={16} />}
           label={t("transfers.summary.flagged")}
@@ -83,78 +117,126 @@ function TransfersPage() {
       </section>
 
       <SectionCard className="overflow-hidden">
-        <div className="flex flex-col md:flex-row gap-3 mb-5">
+        <div className="mb-5 flex flex-col gap-3 md:flex-row">
           <div className="relative flex-1">
             <Search
               size={16}
-              className="absolute top-1/2 -translate-y-1/2 ltr:left-3 rtl:right-3 text-muted-foreground"
+              className="absolute top-1/2 -translate-y-1/2 text-muted-foreground ltr:left-3 rtl:right-3"
             />
+
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={t("common.search")}
-              className="w-full h-9 rounded-md bg-muted/60 border border-transparent focus:border-secondary focus:bg-background outline-none text-sm ltr:pl-9 ltr:pr-3 rtl:pr-9 rtl:pl-3"
+              className="h-9 w-full rounded-md border border-transparent bg-muted/60 text-sm outline-none focus:border-secondary focus:bg-background ltr:pl-9 ltr:pr-3 rtl:pl-3 rtl:pr-9"
             />
           </div>
+
           <div className="flex items-center gap-2">
             <Filter size={14} className="text-muted-foreground" />
+
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as typeof status)}
-              className="h-9 rounded-md border border-border bg-card text-sm px-2.5"
+              className="h-9 rounded-md border border-border bg-card px-2.5 text-sm"
             >
-              {statuses.map((s) => (
-                <option key={s} value={s}>
-                  {s === "all" ? t("common.all") : t(`status.${s}`)}
+              {statuses.map((statusOption) => (
+                <option key={statusOption} value={statusOption}>
+                  {statusOption === "all"
+                    ? t("common.all")
+                    : t(`status.${statusOption}`)}
                 </option>
               ))}
             </select>
+
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as typeof priority)}
-              className="h-9 rounded-md border border-border bg-card text-sm px-2.5"
+              className="h-9 rounded-md border border-border bg-card px-2.5 text-sm"
             >
-              {(["all", "high", "medium", "low"] as const).map((p) => (
-                <option key={p} value={p}>
-                  {p === "all" ? t("common.all") : t(`common.${p}`)}
-                </option>
-              ))}
+              {(["all", "high", "medium", "low"] as const).map(
+                (priorityOption) => (
+                  <option key={priorityOption} value={priorityOption}>
+                    {priorityOption === "all"
+                      ? t("common.all")
+                      : t(`common.${priorityOption}`)}
+                  </option>
+                ),
+              )}
             </select>
           </div>
         </div>
 
-        <div className="overflow-x-auto -mx-5">
+        <div className="-mx-5 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border whitespace-nowrap">
-                <th className="text-start font-semibold px-5 py-3">{t("transfers.id")}</th>
-                <th className="text-start font-semibold px-5 py-3">{t("transfers.asset")}</th>
-                <th className="text-start font-semibold px-5 py-3">{t("transfers.seller")}</th>
-                <th className="text-start font-semibold px-5 py-3">{t("transfers.buyer")}</th>
-                <th className="text-start font-semibold px-5 py-3">{t("common.value")}</th>
-                <th className="text-start font-semibold px-5 py-3">{t("common.status")}</th>
-                <th className="text-start font-semibold px-5 py-3">{t("common.priority")}</th>
-                <th className="text-start font-semibold px-5 py-3">{t("common.created")}</th>
-                <th className="text-end font-semibold px-5 py-3"></th>
+              <tr className="whitespace-nowrap border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
+                <th className="px-5 py-3 text-start font-semibold">
+                  {t("transfers.id")}
+                </th>
+                <th className="px-5 py-3 text-start font-semibold">
+                  {t("transfers.asset")}
+                </th>
+                <th className="px-5 py-3 text-start font-semibold">
+                  {t("transfers.seller")}
+                </th>
+                <th className="px-5 py-3 text-start font-semibold">
+                  {t("transfers.buyer")}
+                </th>
+                <th className="px-5 py-3 text-start font-semibold">
+                  {t("common.value")}
+                </th>
+                <th className="px-5 py-3 text-start font-semibold">
+                  {t("common.status")}
+                </th>
+                <th className="px-5 py-3 text-start font-semibold">
+                  {t("common.priority")}
+                </th>
+                <th className="px-5 py-3 text-start font-semibold">
+                  {t("common.created")}
+                </th>
+                <th className="px-5 py-3 text-end font-semibold" />
               </tr>
             </thead>
+
             <tbody className="divide-y divide-border whitespace-nowrap">
               {filtered.map((tx) => (
-                <tr key={tx.id} className="hover:bg-muted/40 transition-colors">
-                  <td className="px-5 py-3 font-mono text-xs text-foreground">{tx.id}</td>
-                  <td className="px-5 py-3 font-medium text-foreground">{tx.asset}</td>
-                  <td className="px-5 py-3 text-muted-foreground">{tx.seller}</td>
-                  <td className="px-5 py-3 text-muted-foreground">{tx.buyer}</td>
-                  <td className="px-5 py-3 font-mono tabular-nums">{fmtCurrency(tx.value)}</td>
+                <tr
+                  key={tx.id}
+                  className="transition-colors hover:bg-muted/40"
+                >
+                  <td className="px-5 py-3 font-mono text-xs text-foreground">
+                    {tx.id}
+                  </td>
+
+                  <td className="px-5 py-3 font-medium text-foreground">
+                    {tx.asset}
+                  </td>
+
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {tx.seller}
+                  </td>
+
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {tx.buyer}
+                  </td>
+
+                  <td className="px-5 py-3 font-mono tabular-nums">
+                    {fmtCurrency(tx.value)}
+                  </td>
+
                   <td className="px-5 py-3">
                     <StatusBadge status={tx.status} />
                   </td>
+
                   <td className="px-5 py-3">
                     <PriorityBadge priority={tx.priority} />
                   </td>
-                  <td className="px-5 py-3 text-muted-foreground text-xs">
+
+                  <td className="px-5 py-3 text-xs text-muted-foreground">
                     {new Date(tx.createdAt).toLocaleDateString()}
                   </td>
+
                   <td className="px-5 py-3 text-end">
                     <Link
                       to="/transfers/$id"
@@ -166,9 +248,13 @@ function TransfersPage() {
                   </td>
                 </tr>
               ))}
+
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center text-muted-foreground py-10">
+                  <td
+                    colSpan={9}
+                    className="py-10 text-center text-muted-foreground"
+                  >
                     {t("common.noResults")}
                   </td>
                 </tr>

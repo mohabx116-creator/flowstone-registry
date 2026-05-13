@@ -1,27 +1,35 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from '@tanstack/react-router';
 import {
-  Wallet,
-  Boxes,
   ArrowLeftRight,
-  ShieldAlert,
+  ArrowUpRight,
+  Boxes,
   Coins,
   Download,
   PlusCircle,
-  ArrowUpRight,
-} from "lucide-react";
-import { AppShell } from "@/components/AppShell";
-import { PageHeader, SectionCard, StatCard } from "@/components/Primitives";
-import { StatusBadge } from "@/components/StatusBadge";
-import { useI18n } from "@/lib/i18n";
-import { complianceAlerts, fmtCurrency, tokenized, transfers } from "@/lib/mock-data";
+  ShieldAlert,
+  Wallet,
+} from 'lucide-react';
+import { AppShell } from '@/components/AppShell';
+import { PageHeader, SectionCard, StatCard } from '@/components/Primitives';
+import { StatusBadge } from '@/components/StatusBadge';
+import { requireAuth } from '@/lib/auth-guard';
+import { useI18n } from '@/lib/i18n';
+import {
+  complianceAlerts,
+  fmtCurrency,
+  tokenized,
+  transfers,
+} from '@/lib/mock-data';
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute('/dashboard')({
+  beforeLoad: requireAuth,
   head: () => ({
     meta: [
-      { title: "Dashboard — FlowStone Registry" },
+      { title: 'Dashboard — FlowStone Registry' },
       {
-        name: "description",
-        content: "Institutional RWA dashboard — KPIs, transfers, compliance and tokenized assets.",
+        name: 'description',
+        content:
+          'Institutional RWA dashboard — KPIs, transfers, compliance and tokenized assets.',
       },
     ],
   }),
@@ -35,87 +43,87 @@ function DashboardPage() {
   return (
     <AppShell>
       <PageHeader
-        title={t("dashboard.title")}
-        subtitle={t("dashboard.subtitle")}
+        title={t('dashboard.title')}
+        subtitle={t('dashboard.subtitle')}
         actions={
           <>
-            <button className="inline-flex items-center gap-2 h-9 rounded-md border border-border px-3.5 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-muted transition">
-              <Download size={14} /> {t("common.export")}
+            <button className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3.5 text-xs font-semibold uppercase tracking-wider text-foreground transition hover:bg-muted">
+              <Download size={14} /> {t('common.export')}
             </button>
-            <button className="inline-flex items-center gap-2 h-9 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground hover:opacity-90 transition">
-              <PlusCircle size={14} /> {t("common.registerAsset")}
+            <button className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90">
+              <PlusCircle size={14} /> {t('common.registerAsset')}
             </button>
           </>
         }
       />
 
-      <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <section className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         <StatCard
           icon={<Wallet size={16} />}
-          label={t("kpi.totalAssets")}
+          label={t('kpi.totalAssets')}
           value="$1.2B"
-          trend={{ value: "+4.2%", positive: true }}
+          trend={{ value: '+4.2%', positive: true }}
         />
         <StatCard
           icon={<Boxes size={16} />}
-          label={t("kpi.activeHoldings")}
+          label={t('kpi.activeHoldings')}
           value="42"
-          hint={t("dashboard.hintEntities")}
+          hint={t('dashboard.hintEntities')}
         />
         <StatCard
           icon={<ArrowLeftRight size={16} />}
-          label={t("kpi.pendingTransfers")}
+          label={t('kpi.pendingTransfers')}
           value="8"
-          trend={{ value: "High", positive: false }}
+          trend={{ value: 'High', positive: false }}
         />
         <StatCard
           icon={<ShieldAlert size={16} />}
-          label={t("kpi.complianceCases")}
+          label={t('kpi.complianceCases')}
           value="3"
-          hint={t("dashboard.hintHighSeverity")}
+          hint={t('dashboard.hintHighSeverity')}
         />
         <StatCard
           icon={<Coins size={16} />}
-          label={t("kpi.tokenizedAssets")}
+          label={t('kpi.tokenizedAssets')}
           value="$450M"
-          trend={{ value: "37.5%", positive: true }}
+          trend={{ value: '37.5%', positive: true }}
         />
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 space-y-6">
-          <SectionCard title={t("dashboard.allocation")}>
-            <div className="flex flex-col md:flex-row items-center gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-8">
+          <SectionCard title={t('dashboard.allocation')}>
+            <div className="flex flex-col items-center gap-8 md:flex-row">
               <DonutChart t={t} />
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+              <div className="grid w-full flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
                 {[
                   {
-                    label: t("dashboard.category.realEstate"),
-                    pct: "45%",
-                    val: "$540M",
-                    c: "bg-secondary",
+                    label: t('dashboard.category.realEstate'),
+                    pct: '45%',
+                    val: '$540M',
+                    c: 'bg-secondary',
                   },
                   {
-                    label: t("dashboard.category.privateEquity"),
-                    pct: "35%",
-                    val: "$420M",
-                    c: "bg-navy",
+                    label: t('dashboard.category.privateEquity'),
+                    pct: '35%',
+                    val: '$420M',
+                    c: 'bg-navy',
                   },
                   {
-                    label: t("dashboard.category.debt"),
-                    pct: "20%",
-                    val: "$240M",
-                    c: "bg-muted-foreground",
+                    label: t('dashboard.category.debt'),
+                    pct: '20%',
+                    val: '$240M',
+                    c: 'bg-muted-foreground',
                   },
                 ].map((s) => (
                   <div
                     key={s.label}
-                    className="rounded-md bg-muted/40 p-3 ltr:border-l-4 rtl:border-r-4 border-secondary"
+                    className="rounded-md border-secondary bg-muted/40 p-3 ltr:border-l-4 rtl:border-r-4"
                   >
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {s.label}
                     </p>
-                    <p className="font-display font-semibold text-lg text-foreground mt-1">
+                    <p className="mt-1 font-display text-lg font-semibold text-foreground">
                       {s.pct}
                     </p>
                     <p className="text-xs text-muted-foreground">{s.val}</p>
@@ -127,40 +135,57 @@ function DashboardPage() {
           </SectionCard>
 
           <SectionCard
-            title={t("dashboard.recentTransfers")}
+            title={t('dashboard.recentTransfers')}
             action={
               <Link
                 to="/transfers"
-                className="text-xs font-semibold uppercase tracking-wider text-secondary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-secondary hover:underline"
               >
-                {t("common.viewAll")} <ArrowUpRight size={12} />
+                {t('common.viewAll')} <ArrowUpRight size={12} />
               </Link>
             }
             className="overflow-hidden"
           >
-            <div className="overflow-x-auto -mx-5">
+            <div className="-mx-5 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    <th className="text-start font-semibold px-5 py-2">{t("transfers.asset")}</th>
-                    <th className="text-start font-semibold px-5 py-2">{t("common.type")}</th>
-                    <th className="text-start font-semibold px-5 py-2">{t("common.value")}</th>
-                    <th className="text-start font-semibold px-5 py-2">{t("common.status")}</th>
-                    <th className="text-end font-semibold px-5 py-2">{t("common.time")}</th>
+                    <th className="px-5 py-2 text-start font-semibold">
+                      {t('transfers.asset')}
+                    </th>
+                    <th className="px-5 py-2 text-start font-semibold">
+                      {t('common.type')}
+                    </th>
+                    <th className="px-5 py-2 text-start font-semibold">
+                      {t('common.value')}
+                    </th>
+                    <th className="px-5 py-2 text-start font-semibold">
+                      {t('common.status')}
+                    </th>
+                    <th className="px-5 py-2 text-end font-semibold">
+                      {t('common.time')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {recent.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="px-5 py-3 font-medium text-foreground">{tx.asset}</td>
-                      <td className="px-5 py-3 text-muted-foreground">{tx.assetType}</td>
+                    <tr
+                      key={tx.id}
+                      className="transition-colors hover:bg-muted/40"
+                    >
+                      <td className="px-5 py-3 font-medium text-foreground">
+                        {tx.asset}
+                      </td>
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {tx.assetType}
+                      </td>
                       <td className="px-5 py-3 font-mono tabular-nums text-foreground">
                         {fmtCurrency(tx.value)}
                       </td>
                       <td className="px-5 py-3">
                         <StatusBadge status={tx.status} />
                       </td>
-                      <td className="px-5 py-3 text-end text-muted-foreground text-xs">
+                      <td className="px-5 py-3 text-end text-xs text-muted-foreground">
                         {timeAgo(tx.createdAt, t)}
                       </td>
                     </tr>
@@ -171,8 +196,8 @@ function DashboardPage() {
           </SectionCard>
         </div>
 
-        <div className="lg:col-span-4 space-y-6">
-          <SectionCard title={t("dashboard.complianceAlerts")}>
+        <div className="space-y-6 lg:col-span-4">
+          <SectionCard title={t('dashboard.complianceAlerts')}>
             <ul className="space-y-3">
               {complianceAlerts.map((a) => (
                 <li
@@ -181,49 +206,53 @@ function DashboardPage() {
                 >
                   <div
                     className={`mt-1 size-2 rounded-full ${
-                      a.severity === "high"
-                        ? "bg-destructive"
-                        : a.severity === "medium"
-                          ? "bg-warning"
-                          : "bg-muted-foreground"
+                      a.severity === 'high'
+                        ? 'bg-destructive'
+                        : a.severity === 'medium'
+                          ? 'bg-warning'
+                          : 'bg-muted-foreground'
                     }`}
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground">{a.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{a.entity}</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {a.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {a.entity}
+                    </p>
                   </div>
                 </li>
               ))}
             </ul>
           </SectionCard>
 
-          <SectionCard title={t("dashboard.registryHealth")}>
+          <SectionCard title={t('dashboard.registryHealth')}>
             <ul className="space-y-3 text-sm">
               {[
                 {
-                  label: t("dashboard.health.ledger"),
-                  val: t("dashboard.health.healthy"),
-                  c: "text-success",
+                  label: t('dashboard.health.ledger'),
+                  val: t('dashboard.health.healthy'),
+                  c: 'text-success',
                 },
                 {
-                  label: t("dashboard.health.kyc"),
-                  val: t("dashboard.health.operational"),
-                  c: "text-success",
+                  label: t('dashboard.health.kyc'),
+                  val: t('dashboard.health.operational'),
+                  c: 'text-success',
                 },
                 {
-                  label: t("dashboard.health.settlement"),
-                  val: t("dashboard.health.degraded"),
-                  c: "text-warning-foreground/80",
+                  label: t('dashboard.health.settlement'),
+                  val: t('dashboard.health.degraded'),
+                  c: 'text-warning-foreground/80',
                 },
                 {
-                  label: t("dashboard.health.audit"),
-                  val: t("dashboard.health.healthy"),
-                  c: "text-success",
+                  label: t('dashboard.health.audit'),
+                  val: t('dashboard.health.healthy'),
+                  c: 'text-success',
                 },
               ].map((s) => (
                 <li
                   key={s.label}
-                  className="flex items-center justify-between border-b border-border last:border-0 pb-2 last:pb-0"
+                  className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0"
                 >
                   <span className="text-muted-foreground">{s.label}</span>
                   <span className={`font-semibold ${s.c}`}>{s.val}</span>
@@ -233,31 +262,38 @@ function DashboardPage() {
           </SectionCard>
 
           <SectionCard
-            title={t("dashboard.tokenizedPreview")}
+            title={t('dashboard.tokenizedPreview')}
             action={
               <Link
                 to="/market"
-                className="text-xs font-semibold uppercase tracking-wider text-secondary hover:underline inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-secondary hover:underline"
               >
-                {t("common.viewAll")} <ArrowUpRight size={12} />
+                {t('common.viewAll')} <ArrowUpRight size={12} />
               </Link>
             }
           >
             <ul className="space-y-3">
               {tokenized.slice(0, 3).map((tk) => (
-                <li key={tk.id} className="flex items-center justify-between text-sm">
+                <li
+                  key={tk.id}
+                  className="flex items-center justify-between text-sm"
+                >
                   <div>
-                    <p className="font-mono text-xs text-muted-foreground">{tk.symbol}</p>
-                    <p className="text-foreground font-medium">{tk.name}</p>
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {tk.symbol}
+                    </p>
+                    <p className="font-medium text-foreground">{tk.name}</p>
                   </div>
                   <div className="text-end">
-                    <p className="font-mono tabular-nums text-foreground">${tk.price.toFixed(2)}</p>
+                    <p className="font-mono tabular-nums text-foreground">
+                      ${tk.price.toFixed(2)}
+                    </p>
                     <p
                       className={`text-xs font-semibold ${
-                        tk.change >= 0 ? "text-success" : "text-destructive"
+                        tk.change >= 0 ? 'text-success' : 'text-destructive'
                       }`}
                     >
-                      {tk.change >= 0 ? "+" : ""}
+                      {tk.change >= 0 ? '+' : ''}
                       {tk.change.toFixed(2)}%
                     </p>
                   </div>
@@ -274,7 +310,7 @@ function DashboardPage() {
 function DonutChart({ t }: { t: (k: string) => string }) {
   return (
     <div className="relative size-44">
-      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
         <circle
           cx="18"
           cy="18"
@@ -314,11 +350,14 @@ function DonutChart({ t }: { t: (k: string) => string }) {
           strokeDashoffset="-80"
         />
       </svg>
+
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-          {t("dashboard.chart.total")}
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {t('dashboard.chart.total')}
         </span>
-        <span className="font-display text-xl font-bold text-foreground">$1.2B</span>
+        <span className="font-display text-xl font-bold text-foreground">
+          $1.2B
+        </span>
       </div>
     </div>
   );
@@ -327,8 +366,16 @@ function DonutChart({ t }: { t: (k: string) => string }) {
 function timeAgo(iso: string, t: (k: string) => string) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m}${t("dashboard.time.m")}`;
+
+  if (m < 60) {
+    return `${m}${t('dashboard.time.m')}`;
+  }
+
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}${t("dashboard.time.h")}`;
-  return `${Math.floor(h / 24)}${t("dashboard.time.d")}`;
+
+  if (h < 24) {
+    return `${h}${t('dashboard.time.h')}`;
+  }
+
+  return `${Math.floor(h / 24)}${t('dashboard.time.d')}`;
 }
