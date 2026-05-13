@@ -1,10 +1,34 @@
-import { Bell, HelpCircle, Menu, Moon, Search, Sun } from "lucide-react";
+import { Bell, HelpCircle, Menu, Moon, Search, Sun, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 
 export function Topbar({ onMenu }: { onMenu: () => void }) {
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
+  const navigate = useNavigate();
+
+  const [user, setUser] = useState<{ email: string; role: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("flowstone_user");
+      if (rawUser) {
+        setUser(JSON.parse(rawUser));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : "MS";
+
+  const handleLogout = () => {
+    localStorage.removeItem("flowstone_token");
+    localStorage.removeItem("flowstone_user");
+    navigate({ to: "/" });
+  };
 
   return (
     <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 md:px-6 bg-card/95 backdrop-blur border-b border-border">
@@ -76,8 +100,16 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
           <HelpCircle size={18} />
         </button>
 
-        <div className="ltr:ml-2 rtl:mr-2 size-9 rounded-full bg-secondary/20 ring-1 ring-secondary/40 flex items-center justify-center text-foreground text-xs font-bold">
-          MS
+        <button
+          onClick={handleLogout}
+          className="size-9 hidden sm:inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label="Logout"
+        >
+          <LogOut size={18} />
+        </button>
+
+        <div className="ltr:ml-2 rtl:mr-2 size-9 rounded-full bg-secondary/20 ring-1 ring-secondary/40 flex items-center justify-center text-foreground text-xs font-bold uppercase">
+          {initials}
         </div>
       </div>
     </header>

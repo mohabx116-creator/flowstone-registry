@@ -9,6 +9,7 @@ import {
   Database,
   X,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,23 @@ const items: Array<{
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  
+  const [user, setUser] = useState<{ email: string; role: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("flowstone_user");
+      if (rawUser) {
+        setUser(JSON.parse(rawUser));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : "MS";
+  const displayName = user?.email ? user.email.split('@')[0] : "Marcus Sterling";
+  const displayRole = user?.role ? user.role : t("user.role");
 
   return (
     <>
@@ -95,12 +113,12 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         </nav>
 
         <div className="px-5 py-4 border-t border-sidebar-border flex items-center gap-3">
-          <div className="size-9 rounded-full bg-secondary/30 ring-1 ring-secondary/50 flex items-center justify-center text-white text-sm font-semibold">
-            MS
+          <div className="size-9 rounded-full bg-secondary/30 ring-1 ring-secondary/50 flex items-center justify-center text-white text-sm font-semibold uppercase">
+            {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-white text-sm font-semibold truncate">Marcus Sterling</p>
-            <p className="text-sidebar-foreground/70 text-xs truncate">{t("user.role")}</p>
+            <p className="text-white text-sm font-semibold truncate">{displayName}</p>
+            <p className="text-sidebar-foreground/70 text-xs truncate">{displayRole}</p>
           </div>
         </div>
       </aside>
