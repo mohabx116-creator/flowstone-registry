@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { login } from '@/lib/auth-api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { isAuthenticated, setStoredAuth } from '../lib/auth-storage';
+import { login } from '@/lib/auth-api';
+import { isAuthenticated, setStoredAuth } from '@/lib/auth-storage';
 
 export const Route = createFileRoute('/')({
   component: LoginPage,
@@ -15,6 +15,7 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,8 +24,9 @@ function LoginPage() {
     }
   }, [navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     setError(null);
     setLoading(true);
 
@@ -35,11 +37,7 @@ function LoginPage() {
 
       navigate({ to: '/dashboard' });
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to login');
-      }
+      setError(err instanceof Error ? err.message : 'Failed to login');
     } finally {
       setLoading(false);
     }
@@ -52,12 +50,17 @@ function LoginPage() {
           <h1 className="font-display text-2xl font-bold text-foreground">
             FlowStone Registry
           </h1>
+
           <p className="mt-2 text-sm text-muted-foreground">
             Sign in to your account
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 space-y-6"
+          autoComplete="off"
+        >
           {error && (
             <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
               {error}
@@ -66,28 +69,40 @@ function LoginPage() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="flowstone-login-email">Email address</Label>
+
               <Input
-                id="email"
+                id="flowstone-login-email"
+                name="flowstone-login-email"
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder="admin@flowstone.dev"
                 disabled={loading}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="flowstone-login-password">Password</Label>
+
               <Input
-                id="password"
+                id="flowstone-login-password"
+                name="flowstone-login-password"
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
                 disabled={loading}
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
               />
             </div>
           </div>
