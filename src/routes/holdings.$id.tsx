@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Activity, ArrowLeft, ShieldCheck, Vote, RefreshCw, AlertCircle } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Activity, ArrowLeft, ShieldCheck, Vote, RefreshCw, AlertCircle, X, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, SectionCard } from "@/components/Primitives";
@@ -7,6 +7,7 @@ import { requireAuth } from "@/lib/auth-guard";
 import { useI18n } from "@/lib/i18n";
 import { getHoldingById, type Holding } from "@/lib/holdings-api";
 import { fmtCurrency } from "@/lib/mock-data";
+import { createTransfer, type TransferPriority } from "@/lib/transfers-api";
 
 export const Route = createFileRoute("/holdings/$id")({
   beforeLoad: requireAuth,
@@ -24,10 +25,18 @@ export const Route = createFileRoute("/holdings/$id")({
 
 function HoldingDetail() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { id } = Route.useParams();
   const [h, setH] = useState<Holding | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Transfer Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [units, setUnits] = useState("");
+  const [priority, setPriority] = useState<TransferPriority>("NORMAL");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -46,6 +55,35 @@ function HoldingDetail() {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  const handleTransferRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!h) return;
+
+    const unitVal = parseInt(units);
+    if (isNaN(unitVal) || unitVal <= 0 || unitVal > h.units) {
+      setSubmitError(`Please enter a valid amount (max ${h.units})`);
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const tx = await createTransfer({
+        holdingId: h.id,
+        units: unitVal,
+        priority
+      });
+      setShowModal(false);
+      // Navigate to the new transfer detail
+      navigate({ to: "/transfers/$id", params: { id: tx.id } });
+    } catch (err: any) {
+      setSubmitError(err.message || "Failed to initiate transfer");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -89,7 +127,14 @@ function HoldingDetail() {
         title={h.asset?.name || "Holding"}
         subtitle={`${t("holding.title")} · ${h.asset?.type || "Asset"}`}
         actions={
-          <button className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90">
+          <button 
+            onClick={() => {
+                setShowModal(true);
+                setUnits(String(h.units));
+                setSubmitError(null);
+            }}
+            className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90"
+          >
             {t("common.requestTransfer")}
           </button>
         }
@@ -195,6 +240,74 @@ function HoldingDetail() {
           </SectionCard>
         </div>
       </div>
+
+      {/* Transfer Request Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
+                    <h3 className="font-bold text-foreground">Initiate Ownership Transfer</h3>
+                    <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleTransferRequest} className="p-6 space-y-5">
+                    {submitError && (
+                        <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-md flex items-center gap-2">
+                            <AlertCircle size={14} />
+                            {submitError}
+                        </div>
+                    )}
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Units to Transfer</label>
+                        <input 
+                            type="number"
+                            value={units}
+                            onChange={(e) => setUnits(e.target.value)}
+                            max={h.units}
+                            min={1}
+                            required
+                            className="h-10 w-full bg-muted/60 border border-transparent focus:border-secondary focus:bg-background rounded-md px-3 text-sm outline-none transition"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Available: {h.units.toLocaleString()} units</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Priority Level</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {["NORMAL", "HIGH", "URGENT"].map((p) => (
+                                <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => setPriority(p as TransferPriority)}
+                                    className={`h-9 text-[10px] font-bold uppercase rounded-md border transition ${
+                                        priority === p 
+                                            ? "bg-secondary text-secondary-foreground border-secondary" 
+                                            : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
+                                    }`}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="pt-2">
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="w-full h-11 bg-secondary text-secondary-foreground rounded-md font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition hover:opacity-90 disabled:opacity-50"
+                        >
+                            {submitting ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+                            Confirm Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
     </AppShell>
   );
 }
