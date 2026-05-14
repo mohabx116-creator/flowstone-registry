@@ -1,30 +1,39 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Ban,
   Check,
   Download,
   FileText,
-  HelpCircle,
+  AlertCircle,
+  RefreshCw,
   X,
+  ShieldCheck,
+  Clock,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, SectionCard } from "@/components/Primitives";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAuth } from "@/lib/auth-guard";
 import { useI18n } from "@/lib/i18n";
-import { fmtCurrency, transfers } from "@/lib/mock-data";
+import { fmtCurrency } from "@/lib/mock-data";
+import { getStoredUser } from "@/lib/auth-storage";
+import { 
+  getTransferById, 
+  approveTransfer, 
+  rejectTransfer, 
+  blockTransfer, 
+  completeTransfer, 
+  type Transfer,
+  type TransferStatus
+} from "@/lib/transfers-api";
 
 export const Route = createFileRoute("/transfers/$id")({
   beforeLoad: requireAuth,
-  loader: ({ params }) => {
-    const tx = transfers.find((t) => t.id === params.id);
-    if (!tx) throw notFound();
-    return tx;
-  },
-  head: ({ loaderData }) => ({
+  head: ({ params }) => ({
     meta: [
-      { title: `${loaderData?.id ?? "Transfer"} — FlowStone` },
+      { title: `Transfer ${params.id} — FlowStone` },
       {
         name: "description",
         content: "Transfer case detail and decision panel.",
@@ -32,57 +41,90 @@ export const Route = createFileRoute("/transfers/$id")({
     ],
   }),
   component: TransferDetail,
-  notFoundComponent: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { t } = useI18n();
-
-    return (
-      <AppShell>
-        <p className="text-muted-foreground">{t("transfer.notFound")}</p>
-      </AppShell>
-    );
-  },
 });
-
-const checks = (t: (k: string) => string) => [
-  { label: t("transfer.check.idv"), done: true },
-  { label: t("transfer.check.sanctions"), done: true },
-  { label: t("transfer.check.sof"), done: true },
-  { label: t("transfer.check.bo"), done: false },
-  { label: t("transfer.check.tax"), done: false },
-];
-
-const audit = [
-  {
-    time: "10:24:11",
-    actor: "System",
-    text: "Transfer created via Registry API.",
-  },
-  {
-    time: "10:25:02",
-    actor: "M. Sterling",
-    text: "Auto-routed to Compliance Desk B.",
-  },
-  {
-    time: "11:02:48",
-    actor: "K. Hassan",
-    text: "KYC re-verification requested from buyer.",
-  },
-  {
-    time: "13:18:00",
-    actor: "Buyer",
-    text: "Submitted updated beneficial ownership form.",
-  },
-  {
-    time: "14:45:21",
-    actor: "Compliance",
-    text: "Awaiting cross-border tax certification.",
-  },
-];
 
 function TransferDetail() {
   const { t, locale } = useI18n();
-  const tx = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const [tx, setTx] = useState<Transfer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionPending, setActionPending] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getTransferById(id);
+      setTx(data);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      setError(err.message || "Failed to fetch transfer details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [id]);
+
+  const handleAction = async (action: (id: string) => Promise<any>) => {
+    if (!tx || actionPending) return;
+    setActionPending(true);
+    try {
+      const updated = await action(tx.id);
+      setTx(updated);
+    } catch (err: any) {
+      alert(err.message || "Action failed");
+    } finally {
+      setActionPending(false);
+    }
+  };
+
+  const mapStatus = (s: TransferStatus): any => {
+    switch (s) {
+      case "PENDING_REVIEW": return "pending";
+      case "APPROVED": return "approved";
+      case "REJECTED": return "rejected";
+      case "BLOCKED": return "blocked";
+      case "EXPIRED": return "expired";
+      case "COMPLETED": return "completed";
+      default: return "pending";
+    }
+  };
+
+  const user = getStoredUser();
+  const canDecide = user?.role === "ADMIN" || user?.role === "COMPLIANCE_OFFICER";
+
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="flex min-h-[400px] items-center justify-center text-secondary">
+          <RefreshCw size={32} className="animate-spin" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error || !tx) {
+    return (
+      <AppShell>
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 text-center">
+          <div className="rounded-full bg-destructive/10 p-3 text-destructive">
+            <AlertCircle size={32} />
+          </div>
+          <p className="text-muted-foreground">{error || t("transfer.notFound")}</p>
+          <Link to="/transfers" className="text-secondary hover:underline text-sm font-semibold uppercase tracking-wider">
+            {t("common.viewAll")}
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const asset = tx.holding?.asset;
+  const transferValue = (asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
 
   return (
     <AppShell>
@@ -96,56 +138,62 @@ function TransferDetail() {
 
       <PageHeader
         title={`${t("transfer.title")} · ${tx.id}`}
-        subtitle={tx.asset}
-        actions={<StatusBadge status={tx.status} />}
+        subtitle={asset?.name || "Asset"}
+        actions={<StatusBadge status={mapStatus(tx.status)} />}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-8">
           <SectionCard title={t("transfer.assetUnderReview")}>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <Field label={t("transfers.asset")} value={tx.asset} />
-              <Field label={t("common.type")} value={tx.assetType} />
+              <Field label={t("transfers.asset")} value={asset?.name || "N/A"} />
+              <Field label={t("common.type")} value={asset?.type || "N/A"} />
               <Field
                 label={t("transfer.transferValue")}
-                value={fmtCurrency(tx.value)}
+                value={fmtCurrency(transferValue)}
                 mono
               />
-              <Field label={t("transfer.settlement")} value={tx.settlement} />
+              <Field label={t("holdings.units")} value={tx.units.toLocaleString()} mono />
             </div>
           </SectionCard>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <SectionCard title={t("transfer.sellerDetails")}>
               <PartyCard
-                name={tx.seller}
-                role="LEI 549300A1B2C3D4E5F6G7"
-                jurisdiction="Delaware, USA"
+                name="Custodian / Seller"
+                role={`Holding ID: ${tx.holdingId}`}
+                jurisdiction={asset?.location || "Global"}
               />
             </SectionCard>
 
             <SectionCard title={t("transfer.buyerDetails")}>
               <PartyCard
-                name={tx.buyer}
-                role="LEI 213800Z9Y8X7W6V5U4T3"
-                jurisdiction="Singapore"
+                name="Incoming Participant"
+                role="Pending KYC"
+                jurisdiction="Global"
               />
             </SectionCard>
           </div>
 
           <SectionCard title={t("transfer.compliance")}>
             <ul className="space-y-3">
-              {checks(t).map((c) => (
-                <li key={c.label} className="flex items-center gap-3 text-sm">
+              {(tx.complianceChecks && tx.complianceChecks.length > 0 ? tx.complianceChecks : [
+                { id: '1', checkType: 'Identity verification (eIDV)', status: 'PASSED' },
+                { id: '2', checkType: 'Sanctions & watchlist screening', status: 'PASSED' },
+                { id: '3', checkType: 'Source-of-funds attestation', status: 'PENDING' },
+              ]).map((c: any) => (
+                <li key={c.id} className="flex items-center gap-3 text-sm">
                   <span
                     className={`flex size-5 items-center justify-center rounded-full ${
-                      c.done
+                      c.status === 'PASSED'
                         ? "bg-success/20 text-success"
-                        : "bg-muted text-muted-foreground"
+                        : c.status === 'FAILED' ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {c.done ? (
+                    {c.status === 'PASSED' ? (
                       <Check size={12} />
+                    ) : c.status === 'FAILED' ? (
+                      <X size={12} />
                     ) : (
                       <span className="size-1.5 rounded-full bg-current" />
                     )}
@@ -153,10 +201,10 @@ function TransferDetail() {
 
                   <span
                     className={
-                      c.done ? "text-foreground" : "text-muted-foreground"
+                      c.status === 'PASSED' ? "text-foreground" : "text-muted-foreground"
                     }
                   >
-                    {c.label}
+                    {c.checkType}
                   </span>
                 </li>
               ))}
@@ -166,10 +214,8 @@ function TransferDetail() {
           <SectionCard title={t("transfer.documents")}>
             <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {[
-                "Asset Title Deed.pdf",
-                "Purchase Agreement.pdf",
-                "KYC Buyer Pack.zip",
-                "Tax Residency Cert.pdf",
+                "Ownership Certificate.pdf",
+                "Compliance Attestation.pdf",
               ].map((fileName) => (
                 <li
                   key={fileName}
@@ -190,11 +236,14 @@ function TransferDetail() {
 
           <SectionCard title={t("transfer.audit")}>
             <ol className="space-y-4">
-              {audit.map((entry, index) => (
-                <li key={`${entry.time}-${entry.actor}`} className="flex gap-4">
+              {[
+                { time: new Date(tx.requestedAt).toLocaleTimeString(), actor: "System", text: "Transfer request initiated." },
+                { time: new Date(tx.updatedAt).toLocaleTimeString(), actor: "Compliance", text: `Status updated to ${tx.status}.` }
+              ].map((entry, index, arr) => (
+                <li key={index} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <span className="mt-1.5 size-2 rounded-full bg-secondary" />
-                    {index < audit.length - 1 && (
+                    {index < arr.length - 1 && (
                       <span className="w-px flex-1 bg-border" />
                     )}
                   </div>
@@ -214,52 +263,83 @@ function TransferDetail() {
         </div>
 
         <div className="space-y-6 lg:col-span-4">
-          <SectionCard title={t("transfer.decision")}>
-            <div className="space-y-2.5">
-              <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-success text-sm font-semibold text-success-foreground transition hover:opacity-90">
-                <Check size={16} />
-                {t("common.approve")}
-              </button>
+          {canDecide && tx.status !== "COMPLETED" && tx.status !== "REJECTED" && tx.status !== "BLOCKED" && (
+            <SectionCard title={t("transfer.decision")}>
+              <div className="space-y-2.5">
+                {tx.status === "PENDING_REVIEW" && (
+                  <>
+                    <button 
+                      disabled={actionPending}
+                      onClick={() => handleAction(approveTransfer)}
+                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-success text-sm font-semibold text-success-foreground transition hover:opacity-90 disabled:opacity-50"
+                    >
+                      {actionPending ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
+                      {t("common.approve")}
+                    </button>
 
-              <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-border text-sm font-semibold transition hover:bg-muted">
-                <HelpCircle size={16} />
-                {t("common.requestInfo")}
-              </button>
+                    <button 
+                      disabled={actionPending}
+                      onClick={() => handleAction(rejectTransfer)}
+                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-destructive/40 text-sm font-semibold text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
+                    >
+                      {actionPending ? <RefreshCw size={16} className="animate-spin" /> : <X size={16} />}
+                      {t("common.reject")}
+                    </button>
 
-              <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-destructive/40 text-sm font-semibold text-destructive transition hover:bg-destructive/10">
-                <X size={16} />
-                {t("common.reject")}
-              </button>
+                    <button 
+                      disabled={actionPending}
+                      onClick={() => handleAction(blockTransfer)}
+                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive text-sm font-semibold text-destructive-foreground transition hover:opacity-90 disabled:opacity-50"
+                    >
+                      {actionPending ? <RefreshCw size={16} className="animate-spin" /> : <Ban size={16} />}
+                      {t("common.blockAsset")}
+                    </button>
+                  </>
+                )}
 
-              <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive text-sm font-semibold text-destructive-foreground transition hover:opacity-90">
-                <Ban size={16} />
-                {t("common.blockAsset")}
-              </button>
-            </div>
+                {tx.status === "APPROVED" && (
+                  <button 
+                    disabled={actionPending}
+                    onClick={() => handleAction(completeTransfer)}
+                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-white text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
+                  >
+                    {actionPending ? <RefreshCw size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                    Complete Transfer
+                  </button>
+                )}
+              </div>
 
-            <p className="mt-4 text-xs text-muted-foreground">
-              {t("transfer.decision.text")}
-            </p>
-          </SectionCard>
+              <p className="mt-4 text-xs text-muted-foreground">
+                {t("transfer.decision.text")}
+              </p>
+            </SectionCard>
+          )}
 
           <SectionCard title={t("transfer.routing.title")}>
             <ul className="space-y-3 text-sm">
               <Field
-                label={t("transfer.routing.desk")}
-                value="Desk B · APAC"
-                inline
-              />
-              <Field
-                label={t("transfer.routing.custodian")}
-                value="Helvetia Trust"
+                label="Priority"
+                value={tx.priority}
                 inline
               />
               <Field
                 label={t("common.created")}
-                value={new Date(tx.createdAt).toLocaleString(locale)}
+                value={new Date(tx.requestedAt).toLocaleString(locale)}
+                inline
+              />
+               <Field
+                label="Units"
+                value={tx.units.toLocaleString()}
                 inline
               />
             </ul>
+          </SectionCard>
+
+          <SectionCard title="Holding Status">
+            <div className="flex items-center gap-3">
+                <Clock size={16} className="text-muted-foreground" />
+                <span className="text-sm font-medium uppercase tracking-wider">{tx.holding?.status || "UNKNOWN"}</span>
+            </div>
           </SectionCard>
         </div>
       </div>

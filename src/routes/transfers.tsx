@@ -5,15 +5,17 @@ import {
   Clock,
   DollarSign,
   Filter,
+  RefreshCw,
   Search,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, SectionCard, StatCard } from "@/components/Primitives";
 import { PriorityBadge, StatusBadge } from "@/components/StatusBadge";
 import { requireAuth } from "@/lib/auth-guard";
 import { useI18n } from "@/lib/i18n";
-import { fmtCurrency, transfers, type TransferStatus } from "@/lib/mock-data";
+import { fmtCurrency } from "@/lib/mock-data";
+import { getTransfers, type Transfer, type TransferStatus, type TransferPriority } from "@/lib/transfers-api";
 
 export const Route = createFileRoute("/transfers")({
   beforeLoad: requireAuth,
@@ -29,23 +31,44 @@ export const Route = createFileRoute("/transfers")({
   component: TransfersPage,
 });
 
-const statuses: ("all" | TransferStatus)[] = [
+const statuses = [
   "all",
-  "pending",
-  "approved",
-  "completed",
-  "rejected",
-  "blocked",
-  "expired",
-];
+  "PENDING_REVIEW",
+  "APPROVED",
+  "COMPLETED",
+  "REJECTED",
+  "BLOCKED",
+  "EXPIRED",
+] as const;
+
+const priorities = ["all", "URGENT", "HIGH", "NORMAL"] as const;
 
 function TransfersPage() {
   const { t } = useI18n();
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("all");
-  const [priority, setPriority] = useState<"all" | "high" | "medium" | "low">(
-    "all",
-  );
+  const [priority, setPriority] = useState<(typeof priorities)[number]>("all");
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getTransfers();
+      setTransfers(data);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      setError(err.message || "Failed to fetch transfers");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const filtered = useMemo(() => {
     return transfers.filter((tx) => {
@@ -57,30 +80,83 @@ function TransfersPage() {
         return false;
       }
 
-      if (
-        q &&
-        !`${tx.id} ${tx.asset} ${tx.seller} ${tx.buyer}`
-          .toLowerCase()
-          .includes(q.toLowerCase())
-      ) {
+      const assetName = tx.holding?.asset?.name || "";
+      const searchStr = `${tx.id} ${assetName}`.toLowerCase();
+      if (q && !searchStr.includes(q.toLowerCase())) {
         return false;
       }
 
       return true;
     });
-  }, [q, status, priority]);
+  }, [transfers, q, status, priority]);
 
-  const open = transfers.filter((transfer) => transfer.status === "pending").length;
+  const mapStatus = (s: TransferStatus): any => {
+    switch (s) {
+      case "PENDING_REVIEW": return "pending";
+      case "APPROVED": return "approved";
+      case "REJECTED": return "rejected";
+      case "BLOCKED": return "blocked";
+      case "EXPIRED": return "expired";
+      case "COMPLETED": return "completed";
+      default: return "pending";
+    }
+  };
+
+  const mapPriority = (p: TransferPriority): any => {
+    switch (p) {
+      case "NORMAL": return "low";
+      case "HIGH": return "medium";
+      case "URGENT": return "high";
+      default: return "low";
+    }
+  };
+
+  const openCount = transfers.filter((transfer) => transfer.status === "PENDING_REVIEW").length;
 
   const aggValue = transfers.reduce(
-    (total, transfer) => total + transfer.value,
+    (total, tx) => total + ((tx.holding?.asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1))),
     0,
   );
 
   const flagged = transfers.filter(
-    (transfer) =>
-      transfer.status === "blocked" || transfer.priority === "high",
+    (tx) =>
+      tx.status === "BLOCKED" || tx.priority === "URGENT",
   ).length;
+
+  if (loading) {
+    return (
+      <AppShell>
+        <PageHeader title={t("transfers.title")} subtitle={t("transfers.subtitle")} />
+        <div className="flex min-h-[400px] items-center justify-center text-secondary">
+          <RefreshCw size={32} className="animate-spin" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppShell>
+        <PageHeader title={t("transfers.title")} subtitle={t("transfers.subtitle")} />
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 text-center">
+          <div className="rounded-full bg-destructive/10 p-3 text-destructive">
+            <AlertTriangle size={32} />
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">Error Loading Transfers</p>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </div>
+          <button 
+            onClick={fetchData}
+            className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90"
+          >
+            <RefreshCw size={14} />
+            Try Again
+          </button>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -93,7 +169,7 @@ function TransfersPage() {
         <StatCard
           icon={<ArrowLeftRight size={16} />}
           label={t("transfers.summary.open")}
-          value={String(open)}
+          value={String(openCount)}
         />
 
         <StatCard
@@ -137,32 +213,30 @@ function TransfersPage() {
 
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value as typeof status)}
+              onChange={(e) => setStatus(e.target.value as any)}
               className="h-9 rounded-md border border-border bg-card px-2.5 text-sm"
             >
               {statuses.map((statusOption) => (
                 <option key={statusOption} value={statusOption}>
                   {statusOption === "all"
                     ? t("common.all")
-                    : t(`status.${statusOption}`)}
+                    : t(`status.${mapStatus(statusOption as any)}`)}
                 </option>
               ))}
             </select>
 
             <select
               value={priority}
-              onChange={(e) => setPriority(e.target.value as typeof priority)}
+              onChange={(e) => setPriority(e.target.value as any)}
               className="h-9 rounded-md border border-border bg-card px-2.5 text-sm"
             >
-              {(["all", "high", "medium", "low"] as const).map(
-                (priorityOption) => (
-                  <option key={priorityOption} value={priorityOption}>
-                    {priorityOption === "all"
-                      ? t("common.all")
-                      : t(`common.${priorityOption}`)}
-                  </option>
-                ),
-              )}
+              {priorities.map((priorityOption) => (
+                <option key={priorityOption} value={priorityOption}>
+                  {priorityOption === "all"
+                    ? t("common.all")
+                    : t(`common.${mapPriority(priorityOption as any)}`)}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -178,10 +252,7 @@ function TransfersPage() {
                   {t("transfers.asset")}
                 </th>
                 <th className="px-5 py-3 text-start font-semibold">
-                  {t("transfers.seller")}
-                </th>
-                <th className="px-5 py-3 text-start font-semibold">
-                  {t("transfers.buyer")}
+                  {t("holdings.units")}
                 </th>
                 <th className="px-5 py-3 text-start font-semibold">
                   {t("common.value")}
@@ -200,59 +271,58 @@ function TransfersPage() {
             </thead>
 
             <tbody className="divide-y divide-border whitespace-nowrap">
-              {filtered.map((tx) => (
-                <tr
-                  key={tx.id}
-                  className="transition-colors hover:bg-muted/40"
-                >
-                  <td className="px-5 py-3 font-mono text-xs text-foreground">
-                    {tx.id}
-                  </td>
+              {filtered.map((tx) => {
+                const txValue = (tx.holding?.asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
+                return (
+                  <tr
+                    key={tx.id}
+                    className="transition-colors hover:bg-muted/40"
+                  >
+                    <td className="px-5 py-3 font-mono text-xs text-foreground">
+                      {tx.id}
+                    </td>
 
-                  <td className="px-5 py-3 font-medium text-foreground">
-                    {tx.asset}
-                  </td>
+                    <td className="px-5 py-3 font-medium text-foreground">
+                      {tx.holding?.asset?.name || "N/A"}
+                    </td>
 
-                  <td className="px-5 py-3 text-muted-foreground">
-                    {tx.seller}
-                  </td>
+                    <td className="px-5 py-3 text-muted-foreground font-mono tabular-nums">
+                      {tx.units.toLocaleString()}
+                    </td>
 
-                  <td className="px-5 py-3 text-muted-foreground">
-                    {tx.buyer}
-                  </td>
+                    <td className="px-5 py-3 font-mono tabular-nums text-foreground">
+                      {fmtCurrency(txValue)}
+                    </td>
 
-                  <td className="px-5 py-3 font-mono tabular-nums">
-                    {fmtCurrency(tx.value)}
-                  </td>
+                    <td className="px-5 py-3">
+                      <StatusBadge status={mapStatus(tx.status)} />
+                    </td>
 
-                  <td className="px-5 py-3">
-                    <StatusBadge status={tx.status} />
-                  </td>
+                    <td className="px-5 py-3">
+                      <PriorityBadge priority={mapPriority(tx.priority)} />
+                    </td>
 
-                  <td className="px-5 py-3">
-                    <PriorityBadge priority={tx.priority} />
-                  </td>
+                    <td className="px-5 py-3 text-xs text-muted-foreground">
+                      {new Date(tx.requestedAt).toLocaleDateString()}
+                    </td>
 
-                  <td className="px-5 py-3 text-xs text-muted-foreground">
-                    {new Date(tx.createdAt).toLocaleDateString()}
-                  </td>
-
-                  <td className="px-5 py-3 text-end">
-                    <Link
-                      to="/transfers/$id"
-                      params={{ id: tx.id }}
-                      className="text-xs font-semibold uppercase tracking-wider text-secondary hover:underline"
-                    >
-                      {t("common.viewDetails")}
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    <td className="px-5 py-3 text-end">
+                      <Link
+                        to="/transfers/$id"
+                        params={{ id: tx.id }}
+                        className="text-xs font-semibold uppercase tracking-wider text-secondary hover:underline"
+                      >
+                        {t("common.viewDetails")}
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
 
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={8}
                     className="py-10 text-center text-muted-foreground"
                   >
                     {t("common.noResults")}
