@@ -156,4 +156,12 @@ export const ar: Record<string, string> = {
   "holding.gov.classA": "وحدات الفئة أ",
   "holding.gov.preemption": "حقوق الشفعة",
   "holding.gov.yes": "نعم",
+  "holdings.title": "حيازات المحفظة",
+  "holdings.subtitle": "إدارة ومراقبة مراكز الأصول المسجلة الخاصة بك.",
+  "holdings.asset": "الأصل",
+  "holdings.ownership": "نسبة الملكية",
+  "holdings.acquired": "تاريخ الاستحواذ",
+  "holdings.summary.totalValue": "القيمة الإجمالية للمحفظة",
+  "holdings.summary.activeHoldings": "الحيازات النشطة",
+  "holdings.summary.pendingActions": "إجراءات معلقة",
 };

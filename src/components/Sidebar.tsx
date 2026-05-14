@@ -24,8 +24,7 @@ const items: Array<{
   { to: '/dashboard', icon: LayoutDashboard, key: 'nav.dashboard' },
   { to: '/transfers', icon: ArrowLeftRight, key: 'nav.transfers' },
   {
-    to: '/holdings/$id',
-    params: { id: 'HLD-001' },
+    to: '/holdings',
     icon: Wallet,
     key: 'nav.holdings',
   },

@@ -1,21 +1,18 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Activity, ArrowLeft, ShieldCheck, Vote } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Activity, ArrowLeft, ShieldCheck, Vote, RefreshCw, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, SectionCard } from "@/components/Primitives";
 import { requireAuth } from "@/lib/auth-guard";
 import { useI18n } from "@/lib/i18n";
-import { fmtCurrency, holdings } from "@/lib/mock-data";
+import { getHoldingById, type Holding } from "@/lib/holdings-api";
+import { fmtCurrency } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/holdings/$id")({
   beforeLoad: requireAuth,
-  loader: ({ params }) => {
-    const h = holdings.find((x) => x.id === params.id);
-    if (!h) throw notFound();
-    return h;
-  },
-  head: ({ loaderData }) => ({
+  head: ({ params }) => ({
     meta: [
-      { title: `${loaderData?.name ?? "Holding"} — FlowStone` },
+      { title: `Holding ${params.id} — FlowStone` },
       {
         name: "description",
         content: "Holding detail with registry, compliance and governance.",
@@ -23,35 +20,74 @@ export const Route = createFileRoute("/holdings/$id")({
     ],
   }),
   component: HoldingDetail,
-  notFoundComponent: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { t } = useI18n();
-
-    return (
-      <AppShell>
-        <p className="text-muted-foreground">{t("holding.notFound")}</p>
-      </AppShell>
-    );
-  },
 });
 
 function HoldingDetail() {
   const { t } = useI18n();
-  const h = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const [h, setH] = useState<Holding | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getHoldingById(id);
+      setH(data);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      setError(err.message || "Failed to fetch holding details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="flex min-h-[400px] items-center justify-center text-secondary">
+          <RefreshCw size={32} className="animate-spin" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error || !h) {
+    return (
+      <AppShell>
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 text-center">
+          <div className="rounded-full bg-destructive/10 p-3 text-destructive">
+            <AlertCircle size={32} />
+          </div>
+          <p className="text-muted-foreground">{error || t("holding.notFound")}</p>
+          <Link to="/holdings" className="text-secondary hover:underline text-sm font-semibold uppercase tracking-wider">
+            {t("common.viewAll")}
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const value = (h.asset?.valuation || 0) * (h.ownershipPercentage / 100);
 
   return (
     <AppShell>
       <Link
-        to="/dashboard"
+        to="/holdings"
         className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft size={14} className="rtl:rotate-180" />
-        {t("nav.dashboard")}
+        {t("nav.holdings")}
       </Link>
 
       <PageHeader
-        title={h.name}
-        subtitle={`${t("holding.title")} · ${h.type}`}
+        title={h.asset?.name || "Holding"}
+        subtitle={`${t("holding.title")} · ${h.asset?.type || "Asset"}`}
         actions={
           <button className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90">
             {t("common.requestTransfer")}
@@ -63,22 +99,22 @@ function HoldingDetail() {
         <div className="space-y-6 lg:col-span-8">
           <SectionCard title={t("holding.assetInfo")}>
             <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-              <Info label={t("holding.registryId")} value={h.registryId} mono />
+              <Info label={t("holding.registryId")} value={h.id} mono />
               <Info
                 label={t("holding.units")}
                 value={h.units.toLocaleString()}
                 mono
               />
-              <Info label={t("common.value")} value={fmtCurrency(h.value)} mono />
+              <Info label={t("common.value")} value={fmtCurrency(value)} mono />
               <Info
                 label={t("holding.registryStatus")}
-                value={h.registryStatus}
+                value={h.status}
               />
               <Info
                 label={t("holding.complianceStatus")}
-                value={h.complianceStatus}
+                value={h.asset?.complianceStatus || "CLEAR"}
               />
-              <Info label={t("holding.eligibility")} value={h.eligibility} />
+              <Info label={t("holding.eligibility")} value="Eligible" />
             </div>
           </SectionCard>
 
@@ -86,25 +122,15 @@ function HoldingDetail() {
             <ul className="divide-y divide-border">
               {[
                 {
-                  d: "2025-05-09",
-                  t: "Quarterly distribution credited",
-                  v: "+$184,200",
+                  d: new Date(h.acquiredAt).toLocaleDateString(),
+                  t: "Ownership stake registered",
+                  v: "VERIFIED",
                 },
                 {
-                  d: "2025-05-04",
-                  t: "Compliance review passed",
-                  v: "",
-                },
-                {
-                  d: "2025-04-22",
-                  t: "Transfer TX-2049-B12 settled",
-                  v: "",
-                },
-                {
-                  d: "2025-04-12",
-                  t: "Annual valuation updated",
-                  v: "+2.3%",
-                },
+                    d: new Date(h.updatedAt).toLocaleDateString(),
+                    t: "Registry record updated",
+                    v: "SUCCESS",
+                }
               ].map((e, index) => (
                 <li
                   key={`${e.d}-${index}`}
@@ -150,21 +176,6 @@ function HoldingDetail() {
                   </p>
                 </div>
               </li>
-
-              <li className="flex items-start gap-3">
-                <ShieldCheck
-                  size={16}
-                  className="mt-0.5 text-warning-foreground/80"
-                />
-                <div>
-                  <p className="font-medium text-foreground">
-                    {t("holding.audit.taxTitle")}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {t("holding.audit.taxSub")}
-                  </p>
-                </div>
-              </li>
             </ul>
           </SectionCard>
 
@@ -173,19 +184,12 @@ function HoldingDetail() {
               <li className="flex items-center gap-3">
                 <Vote size={14} className="text-secondary" />
                 <span className="flex-1">{t("holding.gov.voting")}</span>
-                <span className="font-mono">12,500</span>
+                <span className="font-mono">ACTIVE</span>
               </li>
-
               <li className="flex items-center gap-3">
                 <Vote size={14} className="text-secondary" />
                 <span className="flex-1">{t("holding.gov.classA")}</span>
-                <span className="font-mono">100%</span>
-              </li>
-
-              <li className="flex items-center gap-3">
-                <Vote size={14} className="text-secondary" />
-                <span className="flex-1">{t("holding.gov.preemption")}</span>
-                <span className="font-mono">{t("holding.gov.yes")}</span>
+                <span className="font-mono">YES</span>
               </li>
             </ul>
           </SectionCard>

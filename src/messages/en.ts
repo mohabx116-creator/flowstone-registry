@@ -157,4 +157,12 @@ export const en: Record<string, string> = {
   "holding.gov.classA": "Class A units",
   "holding.gov.preemption": "Pre-emption rights",
   "holding.gov.yes": "Yes",
+  "holdings.title": "Portfolio Holdings",
+  "holdings.subtitle": "Manage and monitor your registered asset positions.",
+  "holdings.asset": "Asset",
+  "holdings.ownership": "Ownership %",
+  "holdings.acquired": "Acquired",
+  "holdings.summary.totalValue": "Total Portfolio Value",
+  "holdings.summary.activeHoldings": "Active Holdings",
+  "holdings.summary.pendingActions": "Pending Actions",
 };

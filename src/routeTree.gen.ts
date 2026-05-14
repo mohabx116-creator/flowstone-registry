@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransfersRouteImport } from './routes/transfers'
 import { Route as MarketRouteImport } from './routes/market'
+import { Route as HoldingsRouteImport } from './routes/holdings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TransfersIdRouteImport } from './routes/transfers.$id'
@@ -24,6 +25,11 @@ const TransfersRoute = TransfersRouteImport.update({
 const MarketRoute = MarketRouteImport.update({
   id: '/market',
   path: '/market',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HoldingsRoute = HoldingsRouteImport.update({
+  id: '/holdings',
+  path: '/holdings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -42,14 +48,15 @@ const TransfersIdRoute = TransfersIdRouteImport.update({
   getParentRoute: () => TransfersRoute,
 } as any)
 const HoldingsIdRoute = HoldingsIdRouteImport.update({
-  id: '/holdings/$id',
-  path: '/holdings/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => HoldingsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
   '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
   '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
   '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/holdings'
     | '/market'
     | '/transfers'
     | '/holdings/$id'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/holdings'
     | '/market'
     | '/transfers'
     | '/holdings/$id'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dashboard'
+    | '/holdings'
     | '/market'
     | '/transfers'
     | '/holdings/$id'
@@ -102,9 +114,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  HoldingsRoute: typeof HoldingsRouteWithChildren
   MarketRoute: typeof MarketRoute
   TransfersRoute: typeof TransfersRouteWithChildren
-  HoldingsIdRoute: typeof HoldingsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -121,6 +133,13 @@ declare module '@tanstack/react-router' {
       path: '/market'
       fullPath: '/market'
       preLoaderRoute: typeof MarketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/holdings': {
+      id: '/holdings'
+      path: '/holdings'
+      fullPath: '/holdings'
+      preLoaderRoute: typeof HoldingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -146,13 +165,25 @@ declare module '@tanstack/react-router' {
     }
     '/holdings/$id': {
       id: '/holdings/$id'
-      path: '/holdings/$id'
+      path: '/$id'
       fullPath: '/holdings/$id'
       preLoaderRoute: typeof HoldingsIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof HoldingsRoute
     }
   }
 }
+
+interface HoldingsRouteChildren {
+  HoldingsIdRoute: typeof HoldingsIdRoute
+}
+
+const HoldingsRouteChildren: HoldingsRouteChildren = {
+  HoldingsIdRoute: HoldingsIdRoute,
+}
+
+const HoldingsRouteWithChildren = HoldingsRoute._addFileChildren(
+  HoldingsRouteChildren,
+)
 
 interface TransfersRouteChildren {
   TransfersIdRoute: typeof TransfersIdRoute
@@ -169,9 +200,9 @@ const TransfersRouteWithChildren = TransfersRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  HoldingsRoute: HoldingsRouteWithChildren,
   MarketRoute: MarketRoute,
   TransfersRoute: TransfersRouteWithChildren,
-  HoldingsIdRoute: HoldingsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
