@@ -14,7 +14,7 @@ import { Route as MarketRouteImport } from './routes/market'
 import { Route as HoldingsRouteImport } from './routes/holdings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TransfersIdRouteImport } from './routes/transfers_.$id'
+import { Route as TransfersIdRouteImport } from './routes/transfers.$id'
 import { Route as HoldingsIdRouteImport } from './routes/holdings.$id'
 
 const TransfersRoute = TransfersRouteImport.update({
@@ -43,9 +43,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const TransfersIdRoute = TransfersIdRouteImport.update({
-  id: '/transfers_/$id',
-  path: '/transfers/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => TransfersRoute,
 } as any)
 const HoldingsIdRoute = HoldingsIdRouteImport.update({
   id: '/$id',
@@ -58,7 +58,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
-  '/transfers': typeof TransfersRoute
+  '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
   '/transfers/$id': typeof TransfersIdRoute
 }
@@ -67,7 +67,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
-  '/transfers': typeof TransfersRoute
+  '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
   '/transfers/$id': typeof TransfersIdRoute
 }
@@ -77,9 +77,9 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
-  '/transfers': typeof TransfersRoute
+  '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
-  '/transfers_/$id': typeof TransfersIdRoute
+  '/transfers/$id': typeof TransfersIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,7 +108,7 @@ export interface FileRouteTypes {
     | '/market'
     | '/transfers'
     | '/holdings/$id'
-    | '/transfers_/$id'
+    | '/transfers/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -116,8 +116,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   HoldingsRoute: typeof HoldingsRouteWithChildren
   MarketRoute: typeof MarketRoute
-  TransfersRoute: typeof TransfersRoute
-  TransfersIdRoute: typeof TransfersIdRoute
+  TransfersRoute: typeof TransfersRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -157,12 +156,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/transfers_/$id': {
-      id: '/transfers_/$id'
-      path: '/transfers/$id'
+    '/transfers/$id': {
+      id: '/transfers/$id'
+      path: '/$id'
       fullPath: '/transfers/$id'
       preLoaderRoute: typeof TransfersIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof TransfersRoute
     }
     '/holdings/$id': {
       id: '/holdings/$id'
@@ -186,13 +185,24 @@ const HoldingsRouteWithChildren = HoldingsRoute._addFileChildren(
   HoldingsRouteChildren,
 )
 
+interface TransfersRouteChildren {
+  TransfersIdRoute: typeof TransfersIdRoute
+}
+
+const TransfersRouteChildren: TransfersRouteChildren = {
+  TransfersIdRoute: TransfersIdRoute,
+}
+
+const TransfersRouteWithChildren = TransfersRoute._addFileChildren(
+  TransfersRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   HoldingsRoute: HoldingsRouteWithChildren,
   MarketRoute: MarketRoute,
-  TransfersRoute: TransfersRoute,
-  TransfersIdRoute: TransfersIdRoute,
+  TransfersRoute: TransfersRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

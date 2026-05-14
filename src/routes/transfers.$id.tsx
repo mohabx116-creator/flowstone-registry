@@ -30,7 +30,7 @@ import {
   type TransferStatus
 } from "@/lib/transfers-api";
 
-export const Route = createFileRoute('/transfers_/$id')({
+export const Route = createFileRoute('/transfers/$id')({
   beforeLoad: requireAuth,
   head: ({ params }) => ({
     meta: [
