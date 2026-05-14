@@ -150,15 +150,21 @@ function TransferDetail() {
       </Link>
 
       <PageHeader
-        title={`${t("transfer.title")} · ${tx.id}`}
-        subtitle={asset?.name || "Asset"}
-        actions={<StatusBadge status={mapStatus(tx.status)} />}
+        title={
+          <div className="flex flex-wrap items-center gap-x-2 min-w-0">
+            <span className="shrink-0">{t("transfer.title")}</span>
+            <span className="text-muted-foreground font-mono text-sm shrink-0">·</span>
+            <span className="font-mono text-sm md:text-base break-all opacity-80">{tx.id}</span>
+          </div>
+        }
+        subtitle={<div className="truncate max-w-[280px] md:max-w-md">{asset?.name || "Asset"}</div>}
+        actions={<div className="shrink-0"><StatusBadge status={mapStatus(tx.status)} /></div>}
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="space-y-6 xl:col-span-8">
           <SectionCard title={t("transfer.assetUnderReview")}>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-4">
               <Field label={t("transfers.asset")} value={asset?.name || "N/A"} />
               <Field label={t("common.type")} value={asset?.type || "N/A"} />
               <Field
@@ -170,8 +176,8 @@ function TransferDetail() {
             </div>
           </SectionCard>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <SectionCard title={t("transfer.sellerDetails")}>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <SectionCard title={t("transfer.sellerDetails")} className="h-full">
               <PartyCard
                 name="Custodian / Seller"
                 role={`Holding ID: ${tx.holdingId}`}
@@ -179,7 +185,7 @@ function TransferDetail() {
               />
             </SectionCard>
 
-            <SectionCard title={t("transfer.buyerDetails")}>
+            <SectionCard title={t("transfer.buyerDetails")} className="h-full">
               <PartyCard
                 name="Incoming Participant"
                 role="Pending KYC"
@@ -189,15 +195,15 @@ function TransferDetail() {
           </div>
 
           <SectionCard title={t("transfer.compliance")}>
-            <ul className="space-y-3">
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
               {(tx.complianceChecks && tx.complianceChecks.length > 0 ? tx.complianceChecks : [
                 { id: '1', checkType: 'Identity verification (eIDV)', status: 'PASSED' },
                 { id: '2', checkType: 'Sanctions & watchlist screening', status: 'PASSED' },
                 { id: '3', checkType: 'Source-of-funds attestation', status: 'PENDING' },
               ]).map((c: any) => (
-                <li key={c.id} className="flex items-center gap-3 text-sm">
+                <li key={c.id} className="flex items-center gap-3 text-sm min-w-0">
                   <span
-                    className={`flex size-5 items-center justify-center rounded-full ${
+                    className={`flex size-5 shrink-0 items-center justify-center rounded-full ${
                       c.status === 'PASSED'
                         ? "bg-success/20 text-success"
                         : c.status === 'FAILED' ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground"
@@ -213,9 +219,10 @@ function TransferDetail() {
                   </span>
 
                   <span
-                    className={
+                    className={cn(
+                      "truncate",
                       c.status === 'PASSED' ? "text-foreground" : "text-muted-foreground"
-                    }
+                    )}
                   >
                     {c.checkType}
                   </span>
@@ -231,18 +238,18 @@ function TransferDetail() {
                 { time: new Date(tx.updatedAt).toLocaleTimeString(), actor: "Compliance", text: `Status updated to ${tx.status}.` }
               ].map((entry, index, arr) => (
                 <li key={index} className="flex gap-4">
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center shrink-0">
                     <span className="mt-1.5 size-2 rounded-full bg-secondary" />
                     {index < arr.length - 1 && (
                       <span className="w-px flex-1 bg-border" />
                     )}
                   </div>
 
-                  <div className="pb-1">
-                    <p className="font-mono text-xs text-muted-foreground">
+                  <div className="pb-1 min-w-0">
+                    <p className="font-mono text-[10px] text-muted-foreground">
                       {entry.time} · {entry.actor}
                     </p>
-                    <p className="mt-0.5 text-sm text-foreground">
+                    <p className="mt-0.5 text-sm text-foreground break-words">
                       {entry.text}
                     </p>
                   </div>
@@ -252,7 +259,7 @@ function TransferDetail() {
           </SectionCard>
         </div>
 
-        <div className="space-y-6 lg:col-span-4">
+        <div className="space-y-6 xl:col-span-4">
           {canDecide && tx.status !== "COMPLETED" && tx.status !== "REJECTED" && tx.status !== "BLOCKED" && (
             <SectionCard title={t("transfer.decision")}>
               {feedback && (
@@ -261,27 +268,30 @@ function TransferDetail() {
                 }`}>
                   <div className="flex items-center gap-2">
                     {feedback.type === "success" ? <Check size={14} /> : <AlertTriangle size={14} />}
-                    {feedback.msg}
+                    <span className="break-words">{feedback.msg}</span>
                   </div>
                 </div>
               )}
 
               {showConfirm ? (
                 <div className="space-y-4 rounded-md border border-border bg-muted/30 p-4 animate-in fade-in zoom-in duration-200">
-                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm Action</p>
-                   <p className="text-sm text-foreground font-medium">Are you sure you want to {showConfirm.label.toLowerCase()} this transfer?</p>
-                   <div className="flex gap-2">
+                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Confirm Action</p>
+                   <p className="text-sm text-foreground font-medium leading-relaxed">Are you sure you want to {showConfirm.label.toLowerCase()} this transfer?</p>
+                   <div className="flex flex-col gap-2 sm:flex-row">
                         <button
                             disabled={actionPending}
                             onClick={executeAction}
-                            className={`flex-1 h-9 rounded-md text-xs font-bold uppercase tracking-wider transition hover:opacity-90 disabled:opacity-50 ${showConfirm.color}`}
+                            className={cn(
+                                "flex-1 h-9 rounded-md text-[11px] font-bold uppercase tracking-wider transition hover:opacity-90 disabled:opacity-50",
+                                showConfirm.color
+                            )}
                         >
                             {actionPending ? <RefreshCw size={14} className="animate-spin mx-auto" /> : "Confirm"}
                         </button>
                         <button
                             disabled={actionPending}
                             onClick={() => setShowConfirm(null)}
-                            className="flex-1 h-9 rounded-md border border-border bg-card text-xs font-bold uppercase tracking-wider transition hover:bg-muted"
+                            className="flex-1 h-9 rounded-md border border-border bg-card text-[11px] font-bold uppercase tracking-wider transition hover:bg-muted"
                         >
                             Cancel
                         </button>
@@ -293,25 +303,25 @@ function TransferDetail() {
                     <>
                         <button 
                         onClick={() => setShowConfirm({ label: t("common.approve"), action: approveTransfer, color: "bg-success text-success-foreground" })}
-                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-success text-sm font-semibold text-success-foreground transition hover:opacity-90"
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-success text-[11px] font-bold uppercase tracking-wider text-success-foreground transition hover:opacity-90"
                         >
-                        <Check size={16} />
+                        <Check size={14} />
                         {t("common.approve")}
                         </button>
 
                         <button 
                         onClick={() => setShowConfirm({ label: t("common.reject"), action: rejectTransfer, color: "bg-destructive text-destructive-foreground" })}
-                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-destructive/40 text-sm font-semibold text-destructive transition hover:bg-destructive/10"
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-destructive/40 text-[11px] font-bold uppercase tracking-wider text-destructive transition hover:bg-destructive/10"
                         >
-                        <X size={16} />
+                        <X size={14} />
                         {t("common.reject")}
                         </button>
 
                         <button 
                         onClick={() => setShowConfirm({ label: t("common.blockAsset"), action: blockTransfer, color: "bg-destructive text-destructive-foreground" })}
-                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive text-sm font-semibold text-destructive-foreground transition hover:opacity-90"
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive text-[11px] font-bold uppercase tracking-wider text-destructive-foreground transition hover:opacity-90"
                         >
-                        <Ban size={16} />
+                        <Ban size={14} />
                         {t("common.blockAsset")}
                         </button>
                     </>
@@ -320,9 +330,9 @@ function TransferDetail() {
                     {tx.status === "APPROVED" && (
                     <button 
                         onClick={() => setShowConfirm({ label: t("common.complete"), action: completeTransfer, color: "bg-info text-white" })}
-                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-white text-sm font-semibold transition hover:opacity-90"
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-white text-[11px] font-bold uppercase tracking-wider transition hover:opacity-90"
                     >
-                        <ShieldCheck size={16} />
+                        <ShieldCheck size={14} />
                         {t("common.complete")}
                     </button>
                     )}
@@ -330,7 +340,7 @@ function TransferDetail() {
               )}
 
               {!showConfirm && (
-                <p className="mt-4 text-xs text-muted-foreground">
+                <p className="mt-4 text-[10px] leading-relaxed text-muted-foreground italic">
                     {t("transfer.decision.text")}
                 </p>
               )}
@@ -360,7 +370,7 @@ function TransferDetail() {
           <SectionCard title="Holding Status">
             <div className="flex items-center gap-3">
                 <Clock size={16} className="text-muted-foreground" />
-                <span className="text-sm font-medium uppercase tracking-wider">{tx.holding?.status || "UNKNOWN"}</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-foreground">{tx.holding?.status || "UNKNOWN"}</span>
             </div>
           </SectionCard>
         </div>
@@ -382,12 +392,13 @@ function Field({
 }) {
   if (inline) {
     return (
-      <li className="flex justify-between gap-3 border-b border-border pb-2 last:border-0 last:pb-0">
-        <span className="text-muted-foreground">{label}</span>
+      <li className="flex justify-between items-center gap-3 border-b border-border pb-2 last:border-0 last:pb-0 min-w-0">
+        <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-tight shrink-0">{label}</span>
         <span
-          className={
+          className={cn(
+            "truncate text-xs font-semibold",
             mono ? "font-mono tabular-nums text-foreground" : "text-foreground"
-          }
+          )}
         >
           {value}
         </span>
@@ -396,16 +407,18 @@ function Field({
   }
 
   return (
-    <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="min-w-0">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground truncate">
         {label}
       </p>
       <p
-        className={`mt-1 ${
+        className={cn(
+          "mt-1.5 truncate text-sm",
           mono
             ? "font-mono tabular-nums text-foreground"
-            : "font-medium text-foreground"
-        }`}
+            : "font-semibold text-foreground"
+        )}
+        title={value}
       >
         {value}
       </p>
@@ -423,8 +436,8 @@ function PartyCard({
   jurisdiction: string;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="flex size-10 items-center justify-center rounded-md bg-secondary/10 font-bold text-secondary">
+    <div className="flex items-start gap-4 min-w-0">
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary/10 font-bold text-secondary text-sm">
         {name
           .split(" ")
           .map((part) => part[0])
@@ -432,12 +445,12 @@ function PartyCard({
           .join("")}
       </div>
 
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-foreground">{name}</p>
-        <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-foreground truncate">{name}</p>
+        <p className="mt-1 font-mono text-[10px] text-muted-foreground break-all leading-tight">
           {role}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">{jurisdiction}</p>
+        <p className="mt-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">{jurisdiction}</p>
       </div>
     </div>
   );
