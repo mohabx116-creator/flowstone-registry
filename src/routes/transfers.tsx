@@ -9,6 +9,7 @@ import {
   Search,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, SectionCard, StatCard } from "@/components/Primitives";
 import { PriorityBadge, StatusBadge } from "@/components/StatusBadge";
@@ -45,6 +46,7 @@ const priorities = ["all", "URGENT", "HIGH", "NORMAL"] as const;
 
 function TransfersPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -266,7 +268,9 @@ function TransfersPage() {
                 <th className="px-5 py-3 text-start font-semibold">
                   {t("common.created")}
                 </th>
-                <th className="px-5 py-3 text-end font-semibold" />
+                <th className="sticky right-0 bg-card px-5 py-3 text-end font-semibold shadow-[-12px_0_12px_-8px_rgba(0,0,0,0.1)]">
+                  Actions
+                </th>
               </tr>
             </thead>
 
@@ -276,41 +280,44 @@ function TransfersPage() {
                 return (
                   <tr
                     key={tx.id}
-                    className="transition-colors hover:bg-muted/40"
+                    onClick={() => navigate({ to: "/transfers/$id", params: { id: tx.id } })}
+                    className="group cursor-pointer transition-colors hover:bg-muted/60"
                   >
-                    <td className="px-5 py-3 font-mono text-xs text-foreground">
+                    <td className="px-5 py-4 font-mono text-xs text-foreground">
                       {tx.id}
                     </td>
 
-                    <td className="px-5 py-3 font-medium text-foreground">
-                      {tx.holding?.asset?.name || "N/A"}
+                    <td className="px-5 py-4">
+                      <div className="font-medium text-foreground">{tx.holding?.asset?.name || "N/A"}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">{tx.holding?.asset?.type || "N/A"}</div>
                     </td>
 
-                    <td className="px-5 py-3 text-muted-foreground font-mono tabular-nums">
+                    <td className="px-5 py-4 text-muted-foreground font-mono tabular-nums">
                       {tx.units.toLocaleString()}
                     </td>
 
-                    <td className="px-5 py-3 font-mono tabular-nums text-foreground">
+                    <td className="px-5 py-4 font-mono tabular-nums text-foreground">
                       {fmtCurrency(txValue)}
                     </td>
 
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-4">
                       <StatusBadge status={mapStatus(tx.status)} />
                     </td>
 
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-4">
                       <PriorityBadge priority={mapPriority(tx.priority)} />
                     </td>
 
-                    <td className="px-5 py-3 text-xs text-muted-foreground">
+                    <td className="px-5 py-4 text-xs text-muted-foreground">
                       {new Date(tx.requestedAt).toLocaleDateString()}
                     </td>
 
-                    <td className="px-5 py-3 text-end">
+                    <td className="sticky right-0 bg-card px-5 py-4 text-end shadow-[-12px_0_12px_-8px_rgba(0,0,0,0.1)] group-hover:bg-muted/60 transition-colors">
                       <Link
                         to="/transfers/$id"
                         params={{ id: tx.id }}
-                        className="text-xs font-semibold uppercase tracking-wider text-secondary hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex h-8 items-center justify-center rounded-md bg-secondary/10 px-3 text-[11px] font-bold uppercase tracking-wider text-secondary transition hover:bg-secondary hover:text-white"
                       >
                         {t("common.viewDetails")}
                       </Link>
