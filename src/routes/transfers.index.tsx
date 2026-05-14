@@ -18,7 +18,7 @@ import { useI18n } from "@/lib/i18n";
 import { fmtCurrency } from "@/lib/mock-data";
 import { getTransfers, type Transfer, type TransferStatus, type TransferPriority } from "@/lib/transfers-api";
 
-export const Route = createFileRoute("/transfers")({
+export const Route = createFileRoute("/transfers/")({
   beforeLoad: requireAuth,
   head: () => ({
     meta: [

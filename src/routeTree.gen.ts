@@ -9,27 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TransfersRouteImport } from './routes/transfers'
 import { Route as MarketRouteImport } from './routes/market'
-import { Route as HoldingsRouteImport } from './routes/holdings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TransfersIndexRouteImport } from './routes/transfers.index'
+import { Route as HoldingsIndexRouteImport } from './routes/holdings.index'
 import { Route as TransfersIdRouteImport } from './routes/transfers.$id'
 import { Route as HoldingsIdRouteImport } from './routes/holdings.$id'
 
-const TransfersRoute = TransfersRouteImport.update({
-  id: '/transfers',
-  path: '/transfers',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MarketRoute = MarketRouteImport.update({
   id: '/market',
   path: '/market',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HoldingsRoute = HoldingsRouteImport.update({
-  id: '/holdings',
-  path: '/holdings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -42,104 +32,102 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TransfersIndexRoute = TransfersIndexRouteImport.update({
+  id: '/transfers/',
+  path: '/transfers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HoldingsIndexRoute = HoldingsIndexRouteImport.update({
+  id: '/holdings/',
+  path: '/holdings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TransfersIdRoute = TransfersIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => TransfersRoute,
+  id: '/transfers/$id',
+  path: '/transfers/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const HoldingsIdRoute = HoldingsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => HoldingsRoute,
+  id: '/holdings/$id',
+  path: '/holdings/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
-  '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
   '/transfers/$id': typeof TransfersIdRoute
+  '/holdings/': typeof HoldingsIndexRoute
+  '/transfers/': typeof TransfersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
-  '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
   '/transfers/$id': typeof TransfersIdRoute
+  '/holdings': typeof HoldingsIndexRoute
+  '/transfers': typeof TransfersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/holdings': typeof HoldingsRouteWithChildren
   '/market': typeof MarketRoute
-  '/transfers': typeof TransfersRouteWithChildren
   '/holdings/$id': typeof HoldingsIdRoute
   '/transfers/$id': typeof TransfersIdRoute
+  '/holdings/': typeof HoldingsIndexRoute
+  '/transfers/': typeof TransfersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/dashboard'
-    | '/holdings'
     | '/market'
-    | '/transfers'
     | '/holdings/$id'
     | '/transfers/$id'
+    | '/holdings/'
+    | '/transfers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
-    | '/holdings'
     | '/market'
-    | '/transfers'
     | '/holdings/$id'
     | '/transfers/$id'
+    | '/holdings'
+    | '/transfers'
   id:
     | '__root__'
     | '/'
     | '/dashboard'
-    | '/holdings'
     | '/market'
-    | '/transfers'
     | '/holdings/$id'
     | '/transfers/$id'
+    | '/holdings/'
+    | '/transfers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
-  HoldingsRoute: typeof HoldingsRouteWithChildren
   MarketRoute: typeof MarketRoute
-  TransfersRoute: typeof TransfersRouteWithChildren
+  HoldingsIdRoute: typeof HoldingsIdRoute
+  TransfersIdRoute: typeof TransfersIdRoute
+  HoldingsIndexRoute: typeof HoldingsIndexRoute
+  TransfersIndexRoute: typeof TransfersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/transfers': {
-      id: '/transfers'
-      path: '/transfers'
-      fullPath: '/transfers'
-      preLoaderRoute: typeof TransfersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/market': {
       id: '/market'
       path: '/market'
       fullPath: '/market'
       preLoaderRoute: typeof MarketRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/holdings': {
-      id: '/holdings'
-      path: '/holdings'
-      fullPath: '/holdings'
-      preLoaderRoute: typeof HoldingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -156,53 +144,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/transfers/': {
+      id: '/transfers/'
+      path: '/transfers'
+      fullPath: '/transfers/'
+      preLoaderRoute: typeof TransfersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/holdings/': {
+      id: '/holdings/'
+      path: '/holdings'
+      fullPath: '/holdings/'
+      preLoaderRoute: typeof HoldingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transfers/$id': {
       id: '/transfers/$id'
-      path: '/$id'
+      path: '/transfers/$id'
       fullPath: '/transfers/$id'
       preLoaderRoute: typeof TransfersIdRouteImport
-      parentRoute: typeof TransfersRoute
+      parentRoute: typeof rootRouteImport
     }
     '/holdings/$id': {
       id: '/holdings/$id'
-      path: '/$id'
+      path: '/holdings/$id'
       fullPath: '/holdings/$id'
       preLoaderRoute: typeof HoldingsIdRouteImport
-      parentRoute: typeof HoldingsRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface HoldingsRouteChildren {
-  HoldingsIdRoute: typeof HoldingsIdRoute
-}
-
-const HoldingsRouteChildren: HoldingsRouteChildren = {
-  HoldingsIdRoute: HoldingsIdRoute,
-}
-
-const HoldingsRouteWithChildren = HoldingsRoute._addFileChildren(
-  HoldingsRouteChildren,
-)
-
-interface TransfersRouteChildren {
-  TransfersIdRoute: typeof TransfersIdRoute
-}
-
-const TransfersRouteChildren: TransfersRouteChildren = {
-  TransfersIdRoute: TransfersIdRoute,
-}
-
-const TransfersRouteWithChildren = TransfersRoute._addFileChildren(
-  TransfersRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
-  HoldingsRoute: HoldingsRouteWithChildren,
   MarketRoute: MarketRoute,
-  TransfersRoute: TransfersRouteWithChildren,
+  HoldingsIdRoute: HoldingsIdRoute,
+  TransfersIdRoute: TransfersIdRoute,
+  HoldingsIndexRoute: HoldingsIndexRoute,
+  TransfersIndexRoute: TransfersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

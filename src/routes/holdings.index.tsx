@@ -18,7 +18,7 @@ import { getHoldings, getMyHoldings, type Holding } from "@/lib/holdings-api";
 import { getStoredUser } from "@/lib/auth-storage";
 import { fmtCurrency } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/holdings")({
+export const Route = createFileRoute("/holdings/")({
   beforeLoad: requireAuth,
   head: () => ({
     meta: [
