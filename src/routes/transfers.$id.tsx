@@ -10,6 +10,7 @@ import {
   X,
   ShieldCheck,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -50,6 +51,12 @@ function TransferDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
+  const [showConfirm, setShowConfirm] = useState<{
+    label: string;
+    action: (id: string) => Promise<any>;
+    color: string;
+  } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -69,14 +76,20 @@ function TransferDetail() {
     fetchData();
   }, [id]);
 
-  const handleAction = async (action: (id: string) => Promise<any>) => {
-    if (!tx || actionPending) return;
+  const executeAction = async () => {
+    if (!tx || !showConfirm || actionPending) return;
+    
+    const { action, label } = showConfirm;
     setActionPending(true);
+    setFeedback(null);
+    
     try {
       const updated = await action(tx.id);
       setTx(updated);
+      setFeedback({ type: "success", msg: `${label} successful.` });
+      setShowConfirm(null);
     } catch (err: any) {
-      alert(err.message || "Action failed");
+      setFeedback({ type: "error", msg: err.message || "Action failed." });
     } finally {
       setActionPending(false);
     }
@@ -211,29 +224,6 @@ function TransferDetail() {
             </ul>
           </SectionCard>
 
-          <SectionCard title={t("transfer.documents")}>
-            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {[
-                "Ownership Certificate.pdf",
-                "Compliance Attestation.pdf",
-              ].map((fileName) => (
-                <li
-                  key={fileName}
-                  className="flex items-center gap-3 rounded-md border border-border p-3"
-                >
-                  <FileText size={16} className="text-secondary" />
-                  <span className="flex-1 truncate text-sm">{fileName}</span>
-                  <button
-                    className="text-muted-foreground hover:text-foreground"
-                    aria-label={`Download ${fileName}`}
-                  >
-                    <Download size={14} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </SectionCard>
-
           <SectionCard title={t("transfer.audit")}>
             <ol className="space-y-4">
               {[
@@ -265,53 +255,85 @@ function TransferDetail() {
         <div className="space-y-6 lg:col-span-4">
           {canDecide && tx.status !== "COMPLETED" && tx.status !== "REJECTED" && tx.status !== "BLOCKED" && (
             <SectionCard title={t("transfer.decision")}>
-              <div className="space-y-2.5">
-                {tx.status === "PENDING_REVIEW" && (
-                  <>
+              {feedback && (
+                <div className={`mb-4 rounded-md p-3 text-xs font-medium ${
+                  feedback.type === "success" ? "bg-success/10 text-success border border-success/20" : "bg-destructive/10 text-destructive border border-destructive/20"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {feedback.type === "success" ? <Check size={14} /> : <AlertTriangle size={14} />}
+                    {feedback.msg}
+                  </div>
+                </div>
+              )}
+
+              {showConfirm ? (
+                <div className="space-y-4 rounded-md border border-border bg-muted/30 p-4 animate-in fade-in zoom-in duration-200">
+                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm Action</p>
+                   <p className="text-sm text-foreground font-medium">Are you sure you want to {showConfirm.label.toLowerCase()} this transfer?</p>
+                   <div className="flex gap-2">
+                        <button
+                            disabled={actionPending}
+                            onClick={executeAction}
+                            className={`flex-1 h-9 rounded-md text-xs font-bold uppercase tracking-wider transition hover:opacity-90 disabled:opacity-50 ${showConfirm.color}`}
+                        >
+                            {actionPending ? <RefreshCw size={14} className="animate-spin mx-auto" /> : "Confirm"}
+                        </button>
+                        <button
+                            disabled={actionPending}
+                            onClick={() => setShowConfirm(null)}
+                            className="flex-1 h-9 rounded-md border border-border bg-card text-xs font-bold uppercase tracking-wider transition hover:bg-muted"
+                        >
+                            Cancel
+                        </button>
+                   </div>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                    {tx.status === "PENDING_REVIEW" && (
+                    <>
+                        <button 
+                        onClick={() => setShowConfirm({ label: t("common.approve"), action: approveTransfer, color: "bg-success text-success-foreground" })}
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-success text-sm font-semibold text-success-foreground transition hover:opacity-90"
+                        >
+                        <Check size={16} />
+                        {t("common.approve")}
+                        </button>
+
+                        <button 
+                        onClick={() => setShowConfirm({ label: t("common.reject"), action: rejectTransfer, color: "bg-destructive text-destructive-foreground" })}
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-destructive/40 text-sm font-semibold text-destructive transition hover:bg-destructive/10"
+                        >
+                        <X size={16} />
+                        {t("common.reject")}
+                        </button>
+
+                        <button 
+                        onClick={() => setShowConfirm({ label: t("common.blockAsset"), action: blockTransfer, color: "bg-destructive text-destructive-foreground" })}
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive text-sm font-semibold text-destructive-foreground transition hover:opacity-90"
+                        >
+                        <Ban size={16} />
+                        {t("common.blockAsset")}
+                        </button>
+                    </>
+                    )}
+
+                    {tx.status === "APPROVED" && (
                     <button 
-                      disabled={actionPending}
-                      onClick={() => handleAction(approveTransfer)}
-                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-success text-sm font-semibold text-success-foreground transition hover:opacity-90 disabled:opacity-50"
+                        onClick={() => setShowConfirm({ label: t("common.complete"), action: completeTransfer, color: "bg-info text-white" })}
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-white text-sm font-semibold transition hover:opacity-90"
                     >
-                      {actionPending ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
-                      {t("common.approve")}
+                        <ShieldCheck size={16} />
+                        {t("common.complete")}
                     </button>
+                    )}
+                </div>
+              )}
 
-                    <button 
-                      disabled={actionPending}
-                      onClick={() => handleAction(rejectTransfer)}
-                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-destructive/40 text-sm font-semibold text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
-                    >
-                      {actionPending ? <RefreshCw size={16} className="animate-spin" /> : <X size={16} />}
-                      {t("common.reject")}
-                    </button>
-
-                    <button 
-                      disabled={actionPending}
-                      onClick={() => handleAction(blockTransfer)}
-                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive text-sm font-semibold text-destructive-foreground transition hover:opacity-90 disabled:opacity-50"
-                    >
-                      {actionPending ? <RefreshCw size={16} className="animate-spin" /> : <Ban size={16} />}
-                      {t("common.blockAsset")}
-                    </button>
-                  </>
-                )}
-
-                {tx.status === "APPROVED" && (
-                  <button 
-                    disabled={actionPending}
-                    onClick={() => handleAction(completeTransfer)}
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-white text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
-                  >
-                    {actionPending ? <RefreshCw size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                    Complete Transfer
-                  </button>
-                )}
-              </div>
-
-              <p className="mt-4 text-xs text-muted-foreground">
-                {t("transfer.decision.text")}
-              </p>
+              {!showConfirm && (
+                <p className="mt-4 text-xs text-muted-foreground">
+                    {t("transfer.decision.text")}
+                </p>
+              )}
             </SectionCard>
           )}
 

@@ -21,6 +21,7 @@ export const en: Record<string, string> = {
   "common.reject": "Reject",
   "common.requestInfo": "Request Information",
   "common.blockAsset": "Block Asset",
+  "common.complete": "Complete Transfer",
   "common.search": "Search",
   "common.filter": "Filter",
   "common.status": "Status",

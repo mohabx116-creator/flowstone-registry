@@ -21,6 +21,7 @@ export const ar: Record<string, string> = {
   "common.reject": "رفض",
   "common.requestInfo": "طلب معلومات",
   "common.blockAsset": "حظر الأصل",
+  "common.complete": "إكمال التحويل",
   "common.search": "بحث",
   "common.filter": "تصفية",
   "common.status": "الحالة",
