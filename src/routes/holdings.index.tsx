@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { 
   Wallet, 
   Search, 
@@ -34,6 +34,7 @@ export const Route = createFileRoute("/holdings/")({
 
 function HoldingsPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -187,7 +188,11 @@ function HoldingsPage() {
               {filtered.map((h) => {
                 const value = (h.asset?.valuation || 0) * (h.ownershipPercentage / 100);
                 return (
-                  <tr key={h.id} className="transition-colors hover:bg-muted/40">
+                  <tr
+                    key={h.id}
+                    onClick={() => navigate({ to: "/holdings/$id", params: { id: h.id } })}
+                    className="cursor-pointer transition-colors hover:bg-muted/40"
+                  >
                     <td className="px-5 py-3 font-mono text-xs text-foreground">{h.id}</td>
                     <td className="px-5 py-3">
                       <div className="font-medium text-foreground">{h.asset?.name || "Unknown Asset"}</div>
@@ -212,6 +217,7 @@ function HoldingsPage() {
                       <Link
                         to="/holdings/$id"
                         params={{ id: h.id }}
+                        onClick={(e) => e.stopPropagation()}
                         className="text-xs font-semibold uppercase tracking-wider text-secondary hover:underline"
                       >
                         {t("common.viewDetails")}

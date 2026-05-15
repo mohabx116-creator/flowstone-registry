@@ -3,8 +3,6 @@ import {
   ArrowLeft,
   Ban,
   Check,
-  Download,
-  FileText,
   AlertCircle,
   RefreshCw,
   X,
@@ -14,12 +12,13 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { PageHeader, SectionCard } from "@/components/Primitives";
+import { SectionCard } from "@/components/Primitives";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAuth } from "@/lib/auth-guard";
 import { useI18n } from "@/lib/i18n";
 import { fmtCurrency } from "@/lib/mock-data";
 import { getStoredUser } from "@/lib/auth-storage";
+import { cn } from "@/lib/utils";
 import { 
   getTransferById, 
   approveTransfer, 
@@ -149,22 +148,35 @@ function TransferDetail() {
         {t("nav.transfers")}
       </Link>
 
-      <PageHeader
-        title={
-          <div className="flex flex-wrap items-center gap-x-2 min-w-0">
+      <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="min-w-0">
+          <h1 className="flex min-w-0 flex-col gap-1.5 font-display text-2xl font-semibold text-foreground sm:flex-row sm:items-baseline sm:gap-2.5 md:text-3xl">
             <span className="shrink-0">{t("transfer.title")}</span>
-            <span className="text-muted-foreground font-mono text-sm shrink-0">·</span>
-            <span className="font-mono text-sm md:text-base break-all opacity-80">{tx.id}</span>
-          </div>
-        }
-        subtitle={<div className="truncate max-w-[280px] md:max-w-md">{asset?.name || "Asset"}</div>}
-        actions={<div className="shrink-0"><StatusBadge status={mapStatus(tx.status)} /></div>}
-      />
+            <span className="hidden shrink-0 font-mono text-sm text-muted-foreground sm:inline">/</span>
+            <span
+              className="min-w-0 max-w-full truncate font-mono text-sm opacity-80 md:text-base"
+              title={tx.id}
+            >
+              {tx.id}
+            </span>
+          </h1>
+          <p
+            className="mt-1 max-w-full truncate text-sm text-muted-foreground sm:max-w-xl lg:max-w-3xl"
+            title={asset?.name || "Asset"}
+          >
+            {asset?.name || "Asset"}
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        <div className="space-y-6 xl:col-span-8">
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <StatusBadge status={mapStatus(tx.status)} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="min-w-0 space-y-6">
           <SectionCard title={t("transfer.assetUnderReview")}>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 2xl:grid-cols-4">
               <Field label={t("transfers.asset")} value={asset?.name || "N/A"} />
               <Field label={t("common.type")} value={asset?.type || "N/A"} />
               <Field
@@ -176,7 +188,7 @@ function TransferDetail() {
             </div>
           </SectionCard>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <SectionCard title={t("transfer.sellerDetails")} className="h-full">
               <PartyCard
                 name="Custodian / Seller"
@@ -195,7 +207,7 @@ function TransferDetail() {
           </div>
 
           <SectionCard title={t("transfer.compliance")}>
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
               {(tx.complianceChecks && tx.complianceChecks.length > 0 ? tx.complianceChecks : [
                 { id: '1', checkType: 'Identity verification (eIDV)', status: 'PASSED' },
                 { id: '2', checkType: 'Sanctions & watchlist screening', status: 'PASSED' },
@@ -220,9 +232,10 @@ function TransferDetail() {
 
                   <span
                     className={cn(
-                      "truncate",
+                      "min-w-0 truncate",
                       c.status === 'PASSED' ? "text-foreground" : "text-muted-foreground"
                     )}
+                    title={c.checkType}
                   >
                     {c.checkType}
                   </span>
@@ -245,7 +258,7 @@ function TransferDetail() {
                     )}
                   </div>
 
-                  <div className="pb-1 min-w-0">
+                  <div className="min-w-0 pb-1">
                     <p className="font-mono text-[10px] text-muted-foreground">
                       {entry.time} · {entry.actor}
                     </p>
@@ -259,16 +272,16 @@ function TransferDetail() {
           </SectionCard>
         </div>
 
-        <div className="space-y-6 xl:col-span-4">
+        <div className="min-w-0 space-y-6">
           {canDecide && tx.status !== "COMPLETED" && tx.status !== "REJECTED" && tx.status !== "BLOCKED" && (
             <SectionCard title={t("transfer.decision")}>
               {feedback && (
                 <div className={`mb-4 rounded-md p-3 text-xs font-medium ${
                   feedback.type === "success" ? "bg-success/10 text-success border border-success/20" : "bg-destructive/10 text-destructive border border-destructive/20"
                 }`}>
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
                     {feedback.type === "success" ? <Check size={14} /> : <AlertTriangle size={14} />}
-                    <span className="break-words">{feedback.msg}</span>
+                    <span className="min-w-0 break-words">{feedback.msg}</span>
                   </div>
                 </div>
               )}
@@ -277,7 +290,7 @@ function TransferDetail() {
                 <div className="space-y-4 rounded-md border border-border bg-muted/30 p-4 animate-in fade-in zoom-in duration-200">
                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Confirm Action</p>
                    <p className="text-sm text-foreground font-medium leading-relaxed">Are you sure you want to {showConfirm.label.toLowerCase()} this transfer?</p>
-                   <div className="flex flex-col gap-2 sm:flex-row">
+                   <div className="flex flex-col gap-2 2xl:flex-row">
                         <button
                             disabled={actionPending}
                             onClick={executeAction}
@@ -368,9 +381,9 @@ function TransferDetail() {
           </SectionCard>
 
           <SectionCard title="Holding Status">
-            <div className="flex items-center gap-3">
-                <Clock size={16} className="text-muted-foreground" />
-                <span className="text-xs font-bold uppercase tracking-widest text-foreground">{tx.holding?.status || "UNKNOWN"}</span>
+            <div className="flex min-w-0 items-center gap-3">
+                <Clock size={16} className="shrink-0 text-muted-foreground" />
+                <span className="min-w-0 truncate text-xs font-bold uppercase tracking-widest text-foreground" title={tx.holding?.status || "UNKNOWN"}>{tx.holding?.status || "UNKNOWN"}</span>
             </div>
           </SectionCard>
         </div>
@@ -392,13 +405,14 @@ function Field({
 }) {
   if (inline) {
     return (
-      <li className="flex justify-between items-center gap-3 border-b border-border pb-2 last:border-0 last:pb-0 min-w-0">
-        <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-tight shrink-0">{label}</span>
+      <li className="flex min-w-0 items-center justify-between gap-3 border-b border-border pb-2 last:border-0 last:pb-0">
+        <span className="min-w-0 truncate text-[11px] font-medium uppercase tracking-tight text-muted-foreground" title={label}>{label}</span>
         <span
           className={cn(
-            "truncate text-xs font-semibold",
+            "max-w-[62%] truncate text-right text-xs font-semibold",
             mono ? "font-mono tabular-nums text-foreground" : "text-foreground"
           )}
+          title={value}
         >
           {value}
         </span>
@@ -408,15 +422,15 @@ function Field({
 
   return (
     <div className="min-w-0">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground truncate">
+      <p className="truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground" title={label}>
         {label}
       </p>
       <p
         className={cn(
-          "mt-1.5 truncate text-sm",
+          "mt-1.5 text-sm leading-snug",
           mono
-            ? "font-mono tabular-nums text-foreground"
-            : "font-semibold text-foreground"
+            ? "truncate font-mono tabular-nums text-foreground"
+            : "break-words font-semibold text-foreground"
         )}
         title={value}
       >
@@ -436,7 +450,7 @@ function PartyCard({
   jurisdiction: string;
 }) {
   return (
-    <div className="flex items-start gap-4 min-w-0">
+    <div className="flex min-w-0 items-start gap-4">
       <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary/10 font-bold text-secondary text-sm">
         {name
           .split(" ")
@@ -446,11 +460,11 @@ function PartyCard({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-foreground truncate">{name}</p>
-        <p className="mt-1 font-mono text-[10px] text-muted-foreground break-all leading-tight">
+        <p className="truncate text-sm font-bold text-foreground" title={name}>{name}</p>
+        <p className="mt-1 break-words font-mono text-[10px] leading-tight text-muted-foreground">
           {role}
         </p>
-        <p className="mt-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">{jurisdiction}</p>
+        <p className="mt-2 truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80" title={jurisdiction}>{jurisdiction}</p>
       </div>
     </div>
   );
