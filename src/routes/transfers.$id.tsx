@@ -135,6 +135,11 @@ function TransferDetail() {
     );
   }
 
+  const isDecisionTerminal =
+    tx.status === "COMPLETED" ||
+    tx.status === "REJECTED" ||
+    tx.status === "BLOCKED" ||
+    tx.status === "EXPIRED";
   const asset = tx.holding?.asset;
   const transferValue = (asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
 
@@ -273,7 +278,7 @@ function TransferDetail() {
         </div>
 
         <div className="min-w-0 space-y-6">
-          {canDecide && tx.status !== "COMPLETED" && tx.status !== "REJECTED" && tx.status !== "BLOCKED" && (
+          {canDecide && !isDecisionTerminal && (
             <SectionCard title={t("transfer.decision")}>
               {feedback && (
                 <div className={`mb-4 rounded-md p-3 text-xs font-medium ${
