@@ -106,6 +106,41 @@ function TransferDetail() {
     }
   };
 
+  const getRegistryOutcome = (status: TransferStatus) => {
+    switch (status) {
+      case "PENDING_REVIEW":
+        return {
+          summaryKey: "transfer.registryOutcome.summary.pending",
+          nextKey: "transfer.registryOutcome.next.pending",
+        };
+      case "APPROVED":
+        return {
+          summaryKey: "transfer.registryOutcome.summary.approved",
+          nextKey: "transfer.registryOutcome.next.approved",
+        };
+      case "COMPLETED":
+        return {
+          summaryKey: "transfer.registryOutcome.summary.completed",
+          nextKey: "transfer.registryOutcome.next.completed",
+        };
+      case "REJECTED":
+        return {
+          summaryKey: "transfer.registryOutcome.summary.rejected",
+          nextKey: "transfer.registryOutcome.next.rejected",
+        };
+      case "BLOCKED":
+        return {
+          summaryKey: "transfer.registryOutcome.summary.blocked",
+          nextKey: "transfer.registryOutcome.next.blocked",
+        };
+      case "EXPIRED":
+        return {
+          summaryKey: "transfer.registryOutcome.summary.expired",
+          nextKey: "transfer.registryOutcome.next.expired",
+        };
+    }
+  };
+
   const user = getStoredUser();
   const canDecide = user?.role === "ADMIN" || user?.role === "COMPLIANCE_OFFICER";
 
@@ -141,6 +176,7 @@ function TransferDetail() {
     tx.status === "BLOCKED" ||
     tx.status === "EXPIRED";
   const asset = tx.holding?.asset;
+  const registryOutcome = getRegistryOutcome(tx.status);
   const transferValue = (asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
 
   return (
@@ -364,6 +400,67 @@ function TransferDetail() {
               )}
             </SectionCard>
           )}
+
+          <SectionCard title={t("transfer.registryOutcome.title")}>
+            <div className="space-y-4">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <span className="min-w-0 truncate text-[11px] font-medium uppercase tracking-tight text-muted-foreground">
+                  {t("transfer.registryOutcome.status")}
+                </span>
+                <StatusBadge status={mapStatus(tx.status)} />
+              </div>
+
+              <p className="text-sm leading-relaxed text-foreground">
+                {t(registryOutcome.summaryKey)}
+              </p>
+
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("transfer.registryOutcome.nextAction")}
+                </p>
+                <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">
+                  {t(registryOutcome.nextKey)}
+                </p>
+              </div>
+
+              {tx.status === "COMPLETED" && (
+                <>
+                  <ul className="space-y-3 text-sm">
+                    <Field
+                      label={t("holdings.units")}
+                      value={tx.units.toLocaleString()}
+                      mono
+                      inline
+                    />
+                    <Field
+                      label={t("transfer.registryOutcome.holdingId")}
+                      value={tx.holdingId}
+                      mono
+                      inline
+                    />
+                    {asset?.name && (
+                      <Field
+                        label={t("transfers.asset")}
+                        value={asset.name}
+                        inline
+                      />
+                    )}
+                    {tx.completedAt && (
+                      <Field
+                        label={t("transfer.registryOutcome.completedAt")}
+                        value={new Date(tx.completedAt).toLocaleString(locale)}
+                        inline
+                      />
+                    )}
+                  </ul>
+
+                  <p className="rounded-md bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
+                    {t("transfer.registryOutcome.ledgerNote")}
+                  </p>
+                </>
+              )}
+            </div>
+          </SectionCard>
 
           <SectionCard title={t("transfer.routing.title")}>
             <ul className="space-y-3 text-sm">

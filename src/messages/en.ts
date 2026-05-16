@@ -142,6 +142,37 @@ export const en: Record<string, string> = {
   "transfer.check.tax": "Cross-border tax certification",
   "transfer.decision.text":
     "All decisions are recorded immutably to the audit trail and notified to the registry custodian.",
+  "transfer.registryOutcome.title": "Registry Outcome",
+  "transfer.registryOutcome.status": "Workflow Status",
+  "transfer.registryOutcome.nextAction": "Next Expected Action",
+  "transfer.registryOutcome.holdingId": "Linked Holding ID",
+  "transfer.registryOutcome.completedAt": "Completed At",
+  "transfer.registryOutcome.summary.pending":
+    "This transfer is under compliance and registry review.",
+  "transfer.registryOutcome.summary.approved":
+    "This transfer has passed review and is ready for registry settlement.",
+  "transfer.registryOutcome.summary.completed":
+    "Registry workflow marked this transfer as completed.",
+  "transfer.registryOutcome.summary.rejected":
+    "This transfer was rejected. No settlement was completed.",
+  "transfer.registryOutcome.summary.blocked":
+    "This transfer is blocked and requires compliance or administrator resolution.",
+  "transfer.registryOutcome.summary.expired":
+    "This transfer has expired. No further action is available.",
+  "transfer.registryOutcome.next.pending":
+    "Approve, reject, or block by an authorized reviewer.",
+  "transfer.registryOutcome.next.approved":
+    "Complete registry settlement.",
+  "transfer.registryOutcome.next.completed":
+    "No further decision action is available.",
+  "transfer.registryOutcome.next.rejected":
+    "No settlement was completed.",
+  "transfer.registryOutcome.next.blocked":
+    "Compliance or administrator resolution is required.",
+  "transfer.registryOutcome.next.expired":
+    "No further action is available.",
+  "transfer.registryOutcome.ledgerNote":
+    "Settlement status is derived from the transfer state. Ownership ledger mutation is backend-controlled and not directly exposed in this view.",
   "transfer.routing.title": "Routing",
   "transfer.routing.desk": "Compliance Desk",
   "transfer.routing.custodian": "Custodian",
