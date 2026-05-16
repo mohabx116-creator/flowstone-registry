@@ -39,6 +39,8 @@ const typeMap: Record<AssetType, { key: string; color: string }> = {
   COMMODITY: { key: 'Commodities', color: '#f59e0b' },
   OTHER: { key: 'Other', color: '#6b7280' },
 };
+const NETWORK_ERROR_MESSAGE =
+  'The backend is still starting or temporarily unreachable. Please retry in a moment.';
 
 function formatStatValue(value: number, currency = 'USD') {
   if (value >= 1_000_000_000) {
@@ -73,20 +75,38 @@ function DashboardPage() {
   const { t } = useI18n();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [slowLoading, setSlowLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const slowLoadingTimer = window.setTimeout(() => {
+      setSlowLoading(true);
+    }, 8000);
+
     getAssets()
       .then(setAssets)
       .catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
         if (msg.includes('401') || msg.includes('Unauthorized')) {
           setError('Your session has expired. Please sign in again.');
+        } else if (
+          msg.includes('Failed to fetch') ||
+          msg.includes('temporarily unreachable') ||
+          msg.includes('NetworkError')
+        ) {
+          setError(NETWORK_ERROR_MESSAGE);
         } else {
           setError('Unable to load assets right now.');
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        window.clearTimeout(slowLoadingTimer);
+        setLoading(false);
+      });
+
+    return () => {
+      window.clearTimeout(slowLoadingTimer);
+    };
   }, []);
 
   const recent = transfers.slice(0, 5);
@@ -119,6 +139,12 @@ function DashboardPage() {
           <p className="font-display text-lg font-medium text-muted-foreground">
             Initializing Asset Stream...
           </p>
+          {slowLoading && (
+            <p className="max-w-md text-center text-sm text-muted-foreground">
+              The backend may be waking up. You can keep waiting, or retry if
+              this takes too long.
+            </p>
+          )}
         </div>
       </AppShell>
     );
