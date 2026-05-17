@@ -26,6 +26,7 @@ import {
   blockTransfer,
   completeTransfer,
   type Transfer,
+  type ComplianceCheckStatus,
 } from "@/lib/transfers-api";
 
 export const Route = createFileRoute("/transfers/$id")({
@@ -51,6 +52,13 @@ type DecisionAction = {
 type RegistryOutcome = {
   summaryKey: string;
   nextKey: string | null;
+};
+
+type AuditEntry = {
+  id: string;
+  time: string;
+  source: string;
+  text: string;
 };
 
 function TransferDetail() {
@@ -158,6 +166,7 @@ function TransferDetail() {
   const registryOutcome = getRegistryOutcome(tx.status);
   const transferValue =
     (asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
+  const auditEntries = getDerivedAuditEntries(tx, t, locale);
 
   const canShowDecisionPanel =
     canDecide && (tx.status === "PENDING_REVIEW" || tx.status === "APPROVED");
@@ -245,69 +254,71 @@ function TransferDetail() {
 
           <SectionCard title={t("transfer.compliance")}>
             {tx.complianceChecks && tx.complianceChecks.length > 0 ? (
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <ul className="grid grid-cols-1 gap-3 xl:grid-cols-1 2xl:grid-cols-2">
                 {tx.complianceChecks.map((check) => (
                   <li
                     key={check.id}
-                    className="flex min-w-0 items-center gap-3 text-sm"
+                    className="min-w-0 rounded-md border border-border bg-muted/20 p-3"
                   >
-                    <span
-                      className={cn(
-                        "flex size-5 shrink-0 items-center justify-center rounded-full",
-                        check.status === "PASSED" &&
-                          "bg-success/20 text-success",
-                        check.status === "FAILED" &&
-                          "bg-destructive/20 text-destructive",
-                        check.status !== "PASSED" &&
-                          check.status !== "FAILED" &&
-                          "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {check.status === "PASSED" ? (
-                        <Check size={12} />
-                      ) : check.status === "FAILED" ? (
-                        <X size={12} />
-                      ) : (
-                        <span className="size-1.5 rounded-full bg-current" />
-                      )}
-                    </span>
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p
+                          className="truncate text-sm font-semibold text-foreground"
+                          title={check.checkType || t("common.unknown")}
+                        >
+                          {check.checkType || t("common.unknown")}
+                        </p>
 
-                    <span
-                      className={cn(
-                        "min-w-0 truncate",
-                        check.status === "PASSED"
-                          ? "text-foreground"
-                          : "text-muted-foreground",
-                      )}
-                      title={check.checkType}
-                    >
-                      {check.checkType}
-                    </span>
+                        {check.notes && (
+                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                            <span className="font-semibold text-foreground">
+                              {t("transfer.compliance.notes")}:
+                            </span>{" "}
+                            {check.notes}
+                          </p>
+                        )}
+                      </div>
+
+                      <span
+                        className={cn(
+                          "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset",
+                          getComplianceStatusClass(check.status),
+                        )}
+                      >
+                        {getComplianceStatusLabel(check.status, t)}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground sm:grid-cols-2">
+                      <MetaLine
+                        label={t("transfer.compliance.createdAt")}
+                        value={formatDateTime(check.createdAt, locale, t)}
+                      />
+                      <MetaLine
+                        label={t("transfer.compliance.updatedAt")}
+                        value={formatDateTime(check.updatedAt, locale, t)}
+                      />
+                    </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {t("transfer.compliance.none")}
-              </p>
+              <EmptyState
+                title={t("transfer.compliance.emptyTitle")}
+                body={t("transfer.compliance.emptyBody")}
+              />
             )}
           </SectionCard>
 
           <SectionCard title={t("transfer.audit")}>
-            <ol className="space-y-4">
-              {[
-                {
-                  time: new Date(tx.requestedAt).toLocaleTimeString(locale),
-                  actor: t("transfer.audit.system"),
-                  text: t("transfer.audit.requestInitiated"),
-                },
-                {
-                  time: new Date(tx.updatedAt).toLocaleTimeString(locale),
-                  actor: t("transfer.audit.compliance"),
-                  text: `${t("transfer.audit.statusUpdated")} ${tx.status}.`,
-                },
-              ].map((entry, index, arr) => (
-                <li key={index} className="flex gap-4">
+            <div className="mb-4 rounded-md border border-border bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">
+              {t("transfer.audit.derivedNotice")}
+            </div>
+
+            {auditEntries.length > 0 ? (
+              <ol className="space-y-4">
+                {auditEntries.map((entry, index, arr) => (
+                  <li key={entry.id} className="flex gap-4">
                   <div className="flex shrink-0 flex-col items-center">
                     <span className="mt-1.5 size-2 rounded-full bg-secondary" />
                     {index < arr.length - 1 && (
@@ -317,15 +328,21 @@ function TransferDetail() {
 
                   <div className="min-w-0 pb-1">
                     <p className="font-mono text-[10px] text-muted-foreground">
-                      {entry.time} · {entry.actor}
+                      {entry.time} / {entry.source}
                     </p>
                     <p className="mt-0.5 break-words text-sm text-foreground">
                       {entry.text}
                     </p>
                   </div>
-                </li>
-              ))}
-            </ol>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <EmptyState
+                title={t("transfer.audit.emptyTitle")}
+                body={t("transfer.audit.emptyBody")}
+              />
+            )}
           </SectionCard>
         </div>
 
@@ -512,7 +529,7 @@ function TransferDetail() {
                     {tx.completedAt && (
                       <Field
                         label={t("transfer.registryOutcome.completedAt")}
-                        value={new Date(tx.completedAt).toLocaleString(locale)}
+                        value={formatDateTime(tx.completedAt, locale, t)}
                         inline
                       />
                     )}
@@ -535,7 +552,7 @@ function TransferDetail() {
               />
               <Field
                 label={t("common.created")}
-                value={new Date(tx.requestedAt).toLocaleString(locale)}
+                value={formatDateTime(tx.requestedAt, locale, t)}
                 inline
               />
               <Field
@@ -620,6 +637,132 @@ function getRegistryOutcome(status: string | null | undefined): RegistryOutcome 
         nextKey: null,
       };
   }
+}
+
+function getComplianceStatusLabel(
+  status: ComplianceCheckStatus | string | null | undefined,
+  t: (key: string) => string,
+) {
+  switch (status) {
+    case "PASSED":
+      return t("transfer.compliance.status.passed");
+    case "FAILED":
+      return t("transfer.compliance.status.failed");
+    case "PENDING":
+      return t("transfer.compliance.status.pending");
+    case "REQUIRES_REVIEW":
+      return t("transfer.compliance.status.requiresReview");
+    default:
+      return t("common.unknown");
+  }
+}
+
+function getComplianceStatusClass(
+  status: ComplianceCheckStatus | string | null | undefined,
+) {
+  switch (status) {
+    case "PASSED":
+      return "bg-success/15 text-success ring-success/30";
+    case "FAILED":
+      return "bg-destructive/15 text-destructive ring-destructive/30";
+    case "PENDING":
+      return "bg-muted text-muted-foreground ring-border";
+    case "REQUIRES_REVIEW":
+      return "bg-warning/15 text-warning-foreground/80 ring-warning/30";
+    default:
+      return "bg-muted text-muted-foreground ring-border";
+  }
+}
+
+function getDerivedAuditEntries(
+  tx: Transfer,
+  t: (key: string) => string,
+  locale: string,
+): AuditEntry[] {
+  const entries: AuditEntry[] = [];
+
+  if (isValidDateValue(tx.requestedAt)) {
+    entries.push({
+      id: "requested",
+      time: formatDateTime(tx.requestedAt, locale, t),
+      source: t("transfer.audit.registryApi"),
+      text: t("transfer.audit.requested"),
+    });
+  }
+
+  if (
+    isValidDateValue(tx.updatedAt) &&
+    !isSameInstant(tx.updatedAt, tx.requestedAt)
+  ) {
+    entries.push({
+      id: "updated",
+      time: formatDateTime(tx.updatedAt, locale, t),
+      source: t("transfer.audit.systemRecord"),
+      text: `${t("transfer.audit.latestStatus")} ${tx.status || t("common.unknown")}.`,
+    });
+  }
+
+  if (isValidDateValue(tx.completedAt)) {
+    entries.push({
+      id: "completed",
+      time: formatDateTime(tx.completedAt, locale, t),
+      source: t("transfer.audit.registryApi"),
+      text: t("transfer.audit.completed"),
+    });
+  }
+
+  return entries;
+}
+
+function formatDateTime(
+  value: string | null | undefined,
+  locale: string,
+  t: (key: string) => string,
+) {
+  if (!isValidDateValue(value)) {
+    return t("common.unavailable");
+  }
+
+  return new Date(value).toLocaleString(locale);
+}
+
+function isValidDateValue(value: string | null | undefined): value is string {
+  return Boolean(value && !Number.isNaN(Date.parse(value)));
+}
+
+function isSameInstant(
+  a: string | null | undefined,
+  b: string | null | undefined,
+) {
+  if (!isValidDateValue(a) || !isValidDateValue(b)) {
+    return false;
+  }
+
+  return new Date(a).getTime() === new Date(b).getTime();
+}
+
+function MetaLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-2">
+      <span className="min-w-0 truncate font-medium" title={label}>
+        {label}
+      </span>
+      <span className="max-w-[58%] truncate font-mono text-foreground" title={value}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function EmptyState({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-md border border-dashed border-border bg-muted/20 p-4">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        {body}
+      </p>
+    </div>
+  );
 }
 
 function Field({
