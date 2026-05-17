@@ -19,6 +19,7 @@ import { useI18n } from "@/lib/i18n";
 import { fmtCurrency } from "@/lib/mock-data";
 import { getStoredUser } from "@/lib/auth-storage";
 import { cn } from "@/lib/utils";
+import { updateComplianceCheck } from "@/lib/compliance-api";
 import {
   getTransferById,
   approveTransfer,
@@ -61,6 +62,24 @@ type AuditEntry = {
   text: string;
 };
 
+type ComplianceDraft = {
+  status: ComplianceCheckStatus;
+  notes: string;
+};
+
+type ComplianceUpdateState = {
+  pending: boolean;
+  type?: "success" | "error";
+  message?: string;
+};
+
+const COMPLIANCE_STATUS_OPTIONS: ComplianceCheckStatus[] = [
+  "PENDING",
+  "PASSED",
+  "FAILED",
+  "REQUIRES_REVIEW",
+];
+
 function TransferDetail() {
   const { t, locale } = useI18n();
   const { id } = Route.useParams();
@@ -74,6 +93,25 @@ function TransferDetail() {
     type: "success" | "error";
     msg: string;
   } | null>(null);
+  const [complianceDrafts, setComplianceDrafts] = useState<
+    Record<string, ComplianceDraft>
+  >({});
+  const [complianceUpdates, setComplianceUpdates] = useState<
+    Record<string, ComplianceUpdateState>
+  >({});
+
+  const syncComplianceDrafts = (data: Transfer) => {
+    const drafts: Record<string, ComplianceDraft> = {};
+
+    for (const check of data.complianceChecks ?? []) {
+      drafts[check.id] = {
+        status: check.status,
+        notes: check.notes ?? "",
+      };
+    }
+
+    setComplianceDrafts(drafts);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -83,6 +121,7 @@ function TransferDetail() {
     try {
       const data = await getTransferById(id);
       setTx(data);
+      syncComplianceDrafts(data);
     } catch (err) {
       console.error("Fetch error:", err);
       const message =
@@ -122,6 +161,77 @@ function TransferDetail() {
       });
     } finally {
       setActionPending(false);
+    }
+  };
+
+  const refreshTransferData = async () => {
+    const data = await getTransferById(id);
+    setTx(data);
+    syncComplianceDrafts(data);
+  };
+
+  const updateComplianceDraft = (
+    checkId: string,
+    patch: Partial<ComplianceDraft>,
+  ) => {
+    setComplianceDrafts((current) => ({
+      ...current,
+      [checkId]: {
+        status: current[checkId]?.status ?? "PENDING",
+        notes: current[checkId]?.notes ?? "",
+        ...patch,
+      },
+    }));
+
+    setComplianceUpdates((current) => ({
+      ...current,
+      [checkId]: { pending: false },
+    }));
+  };
+
+  const saveComplianceCheck = async (checkId: string) => {
+    const draft = complianceDrafts[checkId];
+
+    if (!draft) return;
+
+    setComplianceUpdates((current) => ({
+      ...current,
+      [checkId]: { pending: true },
+    }));
+
+    try {
+      await updateComplianceCheck(checkId, {
+        status: draft.status,
+        notes: draft.notes,
+      });
+
+      await refreshTransferData();
+
+      setComplianceUpdates((current) => ({
+        ...current,
+        [checkId]: {
+          pending: false,
+          type: "success",
+          message: t("transfer.compliance.updateSaved"),
+        },
+      }));
+    } catch (err) {
+      const rawMessage =
+        err instanceof Error
+          ? err.message
+          : t("transfer.compliance.updateFailed");
+      const message = isUnauthorizedMessage(rawMessage)
+        ? t("transfer.compliance.updateUnauthorized")
+        : rawMessage || t("transfer.compliance.updateFailed");
+
+      setComplianceUpdates((current) => ({
+        ...current,
+        [checkId]: {
+          pending: false,
+          type: "error",
+          message,
+        },
+      }));
     }
   };
 
@@ -255,52 +365,131 @@ function TransferDetail() {
           <SectionCard title={t("transfer.compliance")}>
             {tx.complianceChecks && tx.complianceChecks.length > 0 ? (
               <ul className="grid grid-cols-1 gap-3 xl:grid-cols-1 2xl:grid-cols-2">
-                {tx.complianceChecks.map((check) => (
-                  <li
-                    key={check.id}
-                    className="min-w-0 rounded-md border border-border bg-muted/20 p-3"
-                  >
-                    <div className="flex min-w-0 items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p
-                          className="truncate text-sm font-semibold text-foreground"
-                          title={check.checkType || t("common.unknown")}
-                        >
-                          {check.checkType || t("common.unknown")}
-                        </p>
+                {tx.complianceChecks.map((check) => {
+                  const draft = complianceDrafts[check.id] ?? {
+                    status: check.status,
+                    notes: check.notes ?? "",
+                  };
+                  const updateState = complianceUpdates[check.id];
+                  const isUpdating = Boolean(updateState?.pending);
 
-                        {check.notes && (
-                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                            <span className="font-semibold text-foreground">
-                              {t("transfer.compliance.notes")}:
-                            </span>{" "}
-                            {check.notes}
+                  return (
+                    <li
+                      key={check.id}
+                      className="min-w-0 rounded-md border border-border bg-muted/20 p-3"
+                    >
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p
+                            className="truncate text-sm font-semibold text-foreground"
+                            title={check.checkType || t("common.unknown")}
+                          >
+                            {check.checkType || t("common.unknown")}
                           </p>
-                        )}
+
+                          {check.notes && (
+                            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                              <span className="font-semibold text-foreground">
+                                {t("transfer.compliance.notes")}:
+                              </span>{" "}
+                              {check.notes}
+                            </p>
+                          )}
+                        </div>
+
+                        <span
+                          className={cn(
+                            "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset",
+                            getComplianceStatusClass(check.status),
+                          )}
+                        >
+                          {getComplianceStatusLabel(check.status, t)}
+                        </span>
                       </div>
 
-                      <span
-                        className={cn(
-                          "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset",
-                          getComplianceStatusClass(check.status),
-                        )}
-                      >
-                        {getComplianceStatusLabel(check.status, t)}
-                      </span>
-                    </div>
+                      {canDecide && (
+                        <div className="mt-3 grid grid-cols-1 gap-3 rounded-md border border-border bg-card/70 p-3">
+                          <label className="min-w-0 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            {t("transfer.compliance.updateStatus")}
+                            <select
+                              disabled={isUpdating}
+                              value={draft.status}
+                              onChange={(event) =>
+                                updateComplianceDraft(check.id, {
+                                  status: event.target
+                                    .value as ComplianceCheckStatus,
+                                })
+                              }
+                              className="mt-1 h-9 w-full rounded-md border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none transition focus:border-secondary disabled:opacity-60"
+                            >
+                              {COMPLIANCE_STATUS_OPTIONS.map((status) => (
+                                <option key={status} value={status}>
+                                  {getComplianceStatusLabel(status, t)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
 
-                    <div className="mt-3 grid grid-cols-1 gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground sm:grid-cols-2">
-                      <MetaLine
-                        label={t("transfer.compliance.createdAt")}
-                        value={formatDateTime(check.createdAt, locale, t)}
-                      />
-                      <MetaLine
-                        label={t("transfer.compliance.updatedAt")}
-                        value={formatDateTime(check.updatedAt, locale, t)}
-                      />
-                    </div>
-                  </li>
-                ))}
+                          <label className="min-w-0 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            {t("transfer.compliance.updateNotes")}
+                            <textarea
+                              disabled={isUpdating}
+                              value={draft.notes}
+                              onChange={(event) =>
+                                updateComplianceDraft(check.id, {
+                                  notes: event.target.value,
+                                })
+                              }
+                              rows={2}
+                              className="mt-1 w-full resize-none rounded-md border border-border bg-background px-2 py-2 text-xs font-medium normal-case leading-relaxed text-foreground outline-none transition placeholder:text-muted-foreground focus:border-secondary disabled:opacity-60"
+                            />
+                          </label>
+
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <button
+                              disabled={isUpdating}
+                              onClick={() => void saveComplianceCheck(check.id)}
+                              className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-secondary px-3 text-[11px] font-bold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90 disabled:opacity-60"
+                            >
+                              {isUpdating ? (
+                                <>
+                                  <RefreshCw size={13} className="animate-spin" />
+                                  {t("transfer.compliance.updateSaving")}
+                                </>
+                              ) : (
+                                t("transfer.compliance.updateAction")
+                              )}
+                            </button>
+
+                            {updateState?.message && (
+                              <p
+                                className={cn(
+                                  "min-w-0 break-words text-xs font-medium",
+                                  updateState.type === "success"
+                                    ? "text-success"
+                                    : "text-destructive",
+                                )}
+                              >
+                                {updateState.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-3 grid grid-cols-1 gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground sm:grid-cols-2">
+                        <MetaLine
+                          label={t("transfer.compliance.createdAt")}
+                          value={formatDateTime(check.createdAt, locale, t)}
+                        />
+                        <MetaLine
+                          label={t("transfer.compliance.updatedAt")}
+                          value={formatDateTime(check.updatedAt, locale, t)}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <EmptyState
@@ -739,6 +928,16 @@ function isSameInstant(
   }
 
   return new Date(a).getTime() === new Date(b).getTime();
+}
+
+function isUnauthorizedMessage(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("401") ||
+    normalized.includes("403") ||
+    normalized.includes("unauthorized") ||
+    normalized.includes("forbidden")
+  );
 }
 
 function MetaLine({ label, value }: { label: string; value: string }) {
