@@ -145,7 +145,7 @@ function TransfersPage() {
             <AlertTriangle size={32} />
           </div>
           <div>
-            <p className="font-semibold text-foreground">Error Loading Transfers</p>
+            <p className="font-semibold text-foreground">{t("transfer.errorTitle")}</p>
             <p className="text-sm text-muted-foreground">{error}</p>
           </div>
           <button 
@@ -153,7 +153,7 @@ function TransfersPage() {
             className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90"
           >
             <RefreshCw size={14} />
-            Try Again
+            {t("common.retry")}
           </button>
         </div>
       </AppShell>
@@ -269,7 +269,7 @@ function TransfersPage() {
                   {t("common.created")}
                 </th>
                 <th className="sticky right-0 bg-card px-5 py-3 text-end font-semibold shadow-[-12px_0_12px_-8px_rgba(0,0,0,0.1)]">
-                  Actions
+                  {t("common.actions")}
                 </th>
               </tr>
             </thead>
@@ -288,8 +288,8 @@ function TransfersPage() {
                     </td>
 
                     <td className="px-5 py-4">
-                      <div className="font-medium text-foreground">{tx.holding?.asset?.name || "N/A"}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">{tx.holding?.asset?.type || "N/A"}</div>
+                      <div className="font-medium text-foreground">{tx.holding?.asset?.name || t("common.unknown")}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">{tx.holding?.asset?.type || t("common.unknown")}</div>
                     </td>
 
                     <td className="px-5 py-4 text-muted-foreground font-mono tabular-nums">

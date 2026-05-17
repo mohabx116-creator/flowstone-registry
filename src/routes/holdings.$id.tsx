@@ -125,7 +125,7 @@ function HoldingDetail() {
 
       <PageHeader
         title={h.asset?.name || "Holding"}
-        subtitle={`${t("holding.title")} · ${h.asset?.type || "Asset"}`}
+        subtitle={`${t("holding.title")} · ${h.asset?.type || t("common.unknown")}`}
         actions={
           <button 
             onClick={() => {
@@ -159,7 +159,7 @@ function HoldingDetail() {
                 label={t("holding.complianceStatus")}
                 value={h.asset?.complianceStatus || "CLEAR"}
               />
-              <Info label={t("holding.eligibility")} value="Eligible" />
+              <Info label={t("holding.eligibility")} value={t("holding.eligible")} />
             </div>
           </SectionCard>
 
@@ -246,7 +246,7 @@ function HoldingDetail() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
-                    <h3 className="font-bold text-foreground">Initiate Ownership Transfer</h3>
+                    <h3 className="font-bold text-foreground">{t("holding.modal.title")}</h3>
                     <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground">
                         <X size={20} />
                     </button>
@@ -261,7 +261,7 @@ function HoldingDetail() {
                     )}
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Units to Transfer</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("holding.modal.unitsToTransfer")}</label>
                         <input 
                             type="number"
                             value={units}
@@ -271,11 +271,13 @@ function HoldingDetail() {
                             required
                             className="h-10 w-full bg-muted/60 border border-transparent focus:border-secondary focus:bg-background rounded-md px-3 text-sm outline-none transition"
                         />
-                        <p className="text-[10px] text-muted-foreground">Available: {h.units.toLocaleString()} units</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {t("common.available")}: {h.units.toLocaleString()} {t("common.units")}
+                        </p>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Priority Level</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("holding.modal.priorityLevel")}</label>
                         <div className="grid grid-cols-3 gap-2">
                             {["NORMAL", "HIGH", "URGENT"].map((p) => (
                                 <button
@@ -301,7 +303,7 @@ function HoldingDetail() {
                             className="w-full h-11 bg-secondary text-secondary-foreground rounded-md font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition hover:opacity-90 disabled:opacity-50"
                         >
                             {submitting ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
-                            Confirm Request
+                            {t("holding.modal.confirmRequest")}
                         </button>
                     </div>
                 </form>

@@ -1,6 +1,7 @@
 export const ar: Record<string, string> = {
   "brand.name": "فلوستون ريجستري",
   "brand.tagline": "السجل المؤسسي",
+
   "nav.dashboard": "لوحة التحكم",
   "nav.registry": "السجل",
   "nav.transfers": "التحويلات",
@@ -8,10 +9,13 @@ export const ar: Record<string, string> = {
   "nav.market": "السوق",
   "nav.compliance": "الامتثال",
   "nav.settings": "الإعدادات",
+
   "topbar.search": "ابحث عن الأصول أو الجهات أو معرّفات المعاملات...",
   "topbar.notifications": "الإشعارات",
   "topbar.help": "المساعدة",
+
   "user.role": "رئيس السجل",
+
   "common.viewAll": "عرض الكل",
   "common.viewDetails": "عرض التفاصيل",
   "common.export": "تصدير التقرير",
@@ -34,6 +38,15 @@ export const ar: Record<string, string> = {
   "common.value": "القيمة",
   "common.type": "النوع",
   "common.time": "الوقت",
+  "common.actions": "الإجراءات",
+  "common.available": "المتاح",
+  "common.cancel": "إلغاء",
+  "common.confirm": "تأكيد",
+  "common.noResults": "لا توجد نتائج.",
+  "common.retry": "إعادة المحاولة",
+  "common.units": "وحدات",
+  "common.unknown": "غير معروف",
+  "common.unavailable": "غير متاح",
 
   "status.pending": "قيد المراجعة",
   "status.approved": "مقبول",
@@ -91,39 +104,70 @@ export const ar: Record<string, string> = {
   "transfer.sellerDetails": "بيانات البائع",
   "transfer.buyerDetails": "بيانات المشتري",
   "transfer.compliance": "قائمة فحوصات الامتثال",
+  "transfer.compliance.none": "لا توجد فحوصات امتثال مسجلة لهذا التحويل.",
   "transfer.documents": "المستندات",
   "transfer.audit": "سجل التدقيق",
   "transfer.decision": "لوحة القرار",
+  "transfer.decision.text":
+    "تُسجل كافة القرارات بشكل ثابت في مسار التدقيق ويتم إشعار أمين السجل.",
+  "transfer.errorTitle": "خطأ في تحميل التحويلات",
+  "transfer.notFound": "لم يتم العثور على التحويل.",
+  "transfer.actionSuccess": "تم تنفيذ الإجراء بنجاح.",
+  "transfer.actionFailed": "فشل تنفيذ الإجراء.",
+  "transfer.holdingStatus": "حالة الحيازة",
+
   "transfer.check.idv": "التحقق من الهوية (eIDV)",
   "transfer.check.sanctions": "فحص العقوبات وقوائم المراقبة",
   "transfer.check.sof": "إثبات مصدر الأموال",
   "transfer.check.bo": "الإفصاح عن المالك المستفيد",
   "transfer.check.tax": "شهادة الضرائب العابرة للحدود",
-  "transfer.decision.text": "تُسجل كافة القرارات بشكل ثابت في مسار التدقيق ويتم إشعار أمين السجل.",
+
+  "transfer.audit.system": "النظام",
+  "transfer.audit.compliance": "الامتثال",
+  "transfer.audit.requestInitiated": "تم بدء طلب التحويل.",
+  "transfer.audit.statusUpdated": "تم تحديث الحالة إلى",
+
+  "transfer.field.holdingId": "معرّف الحيازة",
+  "transfer.field.priority": "الأولوية",
+  "transfer.field.holdingStatus": "حالة الحيازة",
+
+  "transfer.confirm.title": "تأكيد الإجراء",
+  "transfer.confirm.body": "هل أنت متأكد أنك تريد تنفيذ هذا الإجراء على التحويل؟",
+
+  "transfer.routing.title": "التوجيه",
+  "transfer.routing.desk": "مكتب الامتثال",
+  "transfer.routing.custodian": "أمين الحفظ",
 
   "transfer.registryOutcome.title": "نتيجة إجراء السجل",
   "transfer.registryOutcome.status": "حالة سير العمل",
   "transfer.registryOutcome.nextAction": "الإجراء المتوقع التالي",
   "transfer.registryOutcome.holdingId": "معرّف الحيازة المرتبطة",
   "transfer.registryOutcome.completedAt": "تاريخ الإكمال",
-  "transfer.registryOutcome.summary.pending": "هذا التحويل قيد مراجعة الامتثال والسجل.",
-  "transfer.registryOutcome.summary.approved": "اجتاز هذا التحويل المراجعة وهو جاهز لتسوية السجل.",
-  "transfer.registryOutcome.summary.completed": "تم وضع علامة مكتمل على هذا التحويل ضمن سير عمل السجل.",
-  "transfer.registryOutcome.summary.rejected": "تم رفض هذا التحويل، ولم تكتمل أي تسوية.",
-  "transfer.registryOutcome.summary.blocked": "هذا التحويل محظور ويتطلب معالجة من فريق الامتثال أو الإدارة.",
-  "transfer.registryOutcome.summary.expired": "انتهت صلاحية هذا التحويل، ولا يتوفر أي إجراء إضافي.",
-  "transfer.registryOutcome.next.pending": "القبول أو الرفض أو الحظر بواسطة مراجع مخوّل.",
+  "transfer.registryOutcome.summary.pending":
+    "هذا التحويل قيد مراجعة الامتثال والسجل.",
+  "transfer.registryOutcome.summary.approved":
+    "اجتاز هذا التحويل المراجعة وهو جاهز لتسوية السجل.",
+  "transfer.registryOutcome.summary.completed":
+    "تم وضع علامة مكتمل على هذا التحويل ضمن سير عمل السجل.",
+  "transfer.registryOutcome.summary.rejected":
+    "تم رفض هذا التحويل، ولم تكتمل أي تسوية.",
+  "transfer.registryOutcome.summary.blocked":
+    "هذا التحويل محظور ويتطلب معالجة من فريق الامتثال أو الإدارة.",
+  "transfer.registryOutcome.summary.expired":
+    "انتهت صلاحية هذا التحويل، ولا يتوفر أي إجراء إضافي.",
+  "transfer.registryOutcome.summary.unknown":
+    "حالة التحويل غير متاحة. راجع آخر سجل قبل اتخاذ أي إجراء.",
+  "transfer.registryOutcome.next.pending":
+    "القبول أو الرفض أو الحظر بواسطة مراجع مخوّل.",
   "transfer.registryOutcome.next.approved": "إكمال تسوية السجل.",
-  "transfer.registryOutcome.next.completed": "لا يتوفر أي إجراء قرار إضافي.",
+  "transfer.registryOutcome.next.completed":
+    "لا يتوفر أي إجراء قرار إضافي.",
   "transfer.registryOutcome.next.rejected": "لم تكتمل أي تسوية.",
-  "transfer.registryOutcome.next.blocked": "يلزم حل من فريق الامتثال أو الإدارة.",
+  "transfer.registryOutcome.next.blocked":
+    "يلزم حل من فريق الامتثال أو الإدارة.",
   "transfer.registryOutcome.next.expired": "لا يتوفر أي إجراء إضافي.",
-  "transfer.registryOutcome.ledgerNote": "حالة التسوية مشتقة من حالة التحويل. تعديل سجل الملكية يتحكم به النظام الخلفي ولا يظهر مباشرة في هذا العرض.",
-
-  "transfer.routing.title": "التوجيه",
-  "transfer.routing.desk": "مكتب الامتثال",
-  "transfer.routing.custodian": "أمين الحفظ",
-  "transfer.notFound": "لم يتم العثور على التحويل.",
+  "transfer.registryOutcome.ledgerNote":
+    "حالة التسوية مشتقة من حالة التحويل. تعديل سجل الملكية يتحكم به النظام الخلفي ولا يظهر مباشرة في هذا العرض.",
 
   "holding.title": "تفاصيل الحيازة",
   "holding.registryId": "معرّف السجل",
@@ -136,20 +180,37 @@ export const ar: Record<string, string> = {
   "holding.governance": "حقوق الحوكمة",
   "holding.notFound": "لم يتم العثور على الحيازة.",
   "holding.assetInfo": "معلومات الأصل",
+  "holding.loading": "جاري تحميل المحفظة...",
+  "holding.errorTitle": "خطأ في تحميل الحيازات",
+  "holding.eligible": "مؤهل",
+
   "holding.audit.kycTitle": "التحقق من الهوية (KYC) ساري",
   "holding.audit.kycSub": "تمت إعادة التحقق منذ 12 يوم",
   "holding.audit.sanctionsTitle": "لا توجد عقوبات",
   "holding.audit.sanctionsSub": "مزامنة يومية لقوائم المراقبة",
   "holding.audit.taxTitle": "انتهاء صلاحية الشهادة الضريبية",
   "holding.audit.taxSub": "خلال 47 يوم",
+
   "holding.gov.voting": "حقوق التصويت",
   "holding.gov.classA": "وحدات الفئة أ",
   "holding.gov.preemption": "حقوق الشفعة",
   "holding.gov.yes": "نعم",
 
+  "holding.transferModal.title": "بدء تحويل ملكية",
+  "holding.transferModal.unitsLabel": "الوحدات المطلوب تحويلها",
+  "holding.transferModal.priorityLabel": "مستوى الأولوية",
+  "holding.transferModal.availableLabel": "المتاح",
+  "holding.transferModal.confirmButton": "تأكيد الطلب",
+
+  "holding.modal.title": "بدء تحويل ملكية",
+  "holding.modal.unitsToTransfer": "الوحدات المطلوب تحويلها",
+  "holding.modal.priorityLevel": "مستوى الأولوية",
+  "holding.modal.confirmRequest": "تأكيد الطلب",
+
   "holdings.title": "حيازات المحفظة",
   "holdings.subtitle": "إدارة ومراقبة مراكز الأصول المسجلة الخاصة بك.",
   "holdings.asset": "الأصل",
+  "holdings.units": "الوحدات",
   "holdings.ownership": "نسبة الملكية",
   "holdings.acquired": "تاريخ الاستحواذ",
   "holdings.summary.totalValue": "القيمة الإجمالية للمحفظة",

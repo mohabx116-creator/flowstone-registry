@@ -92,7 +92,7 @@ function HoldingsPage() {
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <RefreshCw size={32} className="animate-spin text-secondary" />
-            <p className="text-sm text-muted-foreground">Loading portfolio...</p>
+            <p className="text-sm text-muted-foreground">{t("holding.loading")}</p>
           </div>
         </div>
       </AppShell>
@@ -109,7 +109,7 @@ function HoldingsPage() {
               <AlertCircle size={32} />
             </div>
             <div>
-              <p className="font-semibold text-foreground">Error Loading Holdings</p>
+              <p className="font-semibold text-foreground">{t("holding.errorTitle")}</p>
               <p className="text-sm text-muted-foreground">{error}</p>
             </div>
             <button 
@@ -117,7 +117,7 @@ function HoldingsPage() {
               className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90"
             >
               <RefreshCw size={14} />
-              Try Again
+              {t("common.retry")}
             </button>
           </div>
         </div>
@@ -144,7 +144,7 @@ function HoldingsPage() {
           icon={<TrendingUp size={16} />}
           label={t("holdings.summary.pendingActions")}
           value="0"
-          trend={{ value: "Compliant", positive: true }}
+          trend={{ value: t("dashboard.health.healthy"), positive: true }}
         />
       </section>
 
@@ -195,8 +195,8 @@ function HoldingsPage() {
                   >
                     <td className="px-5 py-3 font-mono text-xs text-foreground">{h.id}</td>
                     <td className="px-5 py-3">
-                      <div className="font-medium text-foreground">{h.asset?.name || "Unknown Asset"}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">{h.asset?.type || "N/A"}</div>
+                      <div className="font-medium text-foreground">{h.asset?.name || t("common.unknown")}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">{h.asset?.type || t("common.unknown")}</div>
                     </td>
                     <td className="px-5 py-3 font-mono tabular-nums text-muted-foreground">
                       {h.units.toLocaleString()}

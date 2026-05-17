@@ -19,17 +19,16 @@ import { useI18n } from "@/lib/i18n";
 import { fmtCurrency } from "@/lib/mock-data";
 import { getStoredUser } from "@/lib/auth-storage";
 import { cn } from "@/lib/utils";
-import { 
-  getTransferById, 
-  approveTransfer, 
-  rejectTransfer, 
-  blockTransfer, 
-  completeTransfer, 
+import {
+  getTransferById,
+  approveTransfer,
+  rejectTransfer,
+  blockTransfer,
+  completeTransfer,
   type Transfer,
-  type TransferStatus
 } from "@/lib/transfers-api";
 
-export const Route = createFileRoute('/transfers/$id')({
+export const Route = createFileRoute("/transfers/$id")({
   beforeLoad: requireAuth,
   head: ({ params }) => ({
     meta: [
@@ -43,106 +42,84 @@ export const Route = createFileRoute('/transfers/$id')({
   component: TransferDetail,
 });
 
+type DecisionAction = {
+  label: string;
+  action: (id: string) => Promise<Transfer>;
+  color: string;
+};
+
+type RegistryOutcome = {
+  summaryKey: string;
+  nextKey: string | null;
+};
+
 function TransferDetail() {
   const { t, locale } = useI18n();
   const { id } = Route.useParams();
+
   const [tx, setTx] = useState<Transfer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
-  const [showConfirm, setShowConfirm] = useState<{
-    label: string;
-    action: (id: string) => Promise<any>;
-    color: string;
+  const [showConfirm, setShowConfirm] = useState<DecisionAction | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    msg: string;
   } | null>(null);
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+    setFeedback(null);
+
     try {
       const data = await getTransferById(id);
       setTx(data);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch error:", err);
-      setError(err.message || "Failed to fetch transfer details");
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch transfer details";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, [id]);
 
   const executeAction = async () => {
     if (!tx || !showConfirm || actionPending) return;
-    
+
     const { action, label } = showConfirm;
     setActionPending(true);
     setFeedback(null);
-    
+
     try {
       const updated = await action(tx.id);
       setTx(updated);
-      setFeedback({ type: "success", msg: `${label} successful.` });
+      setFeedback({
+        type: "success",
+        msg: `${label}: ${t("transfer.actionSuccess")}`,
+      });
       setShowConfirm(null);
-    } catch (err: any) {
-      setFeedback({ type: "error", msg: err.message || "Action failed." });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : t("transfer.actionFailed");
+
+      setFeedback({
+        type: "error",
+        msg: message,
+      });
     } finally {
       setActionPending(false);
     }
   };
 
-  const mapStatus = (s: TransferStatus): any => {
-    switch (s) {
-      case "PENDING_REVIEW": return "pending";
-      case "APPROVED": return "approved";
-      case "REJECTED": return "rejected";
-      case "BLOCKED": return "blocked";
-      case "EXPIRED": return "expired";
-      case "COMPLETED": return "completed";
-      default: return "pending";
-    }
-  };
-
-  const getRegistryOutcome = (status: TransferStatus) => {
-    switch (status) {
-      case "PENDING_REVIEW":
-        return {
-          summaryKey: "transfer.registryOutcome.summary.pending",
-          nextKey: "transfer.registryOutcome.next.pending",
-        };
-      case "APPROVED":
-        return {
-          summaryKey: "transfer.registryOutcome.summary.approved",
-          nextKey: "transfer.registryOutcome.next.approved",
-        };
-      case "COMPLETED":
-        return {
-          summaryKey: "transfer.registryOutcome.summary.completed",
-          nextKey: "transfer.registryOutcome.next.completed",
-        };
-      case "REJECTED":
-        return {
-          summaryKey: "transfer.registryOutcome.summary.rejected",
-          nextKey: "transfer.registryOutcome.next.rejected",
-        };
-      case "BLOCKED":
-        return {
-          summaryKey: "transfer.registryOutcome.summary.blocked",
-          nextKey: "transfer.registryOutcome.next.blocked",
-        };
-      case "EXPIRED":
-        return {
-          summaryKey: "transfer.registryOutcome.summary.expired",
-          nextKey: "transfer.registryOutcome.next.expired",
-        };
-    }
-  };
-
   const user = getStoredUser();
-  const canDecide = user?.role === "ADMIN" || user?.role === "COMPLIANCE_OFFICER";
+  const canDecide =
+    user?.role === "ADMIN" || user?.role === "COMPLIANCE_OFFICER";
 
   if (loading) {
     return (
@@ -161,8 +138,15 @@ function TransferDetail() {
           <div className="rounded-full bg-destructive/10 p-3 text-destructive">
             <AlertCircle size={32} />
           </div>
-          <p className="text-muted-foreground">{error || t("transfer.notFound")}</p>
-          <Link to="/transfers" className="text-secondary hover:underline text-sm font-semibold uppercase tracking-wider">
+
+          <p className="text-muted-foreground">
+            {error || t("transfer.notFound")}
+          </p>
+
+          <Link
+            to="/transfers"
+            className="text-sm font-semibold uppercase tracking-wider text-secondary hover:underline"
+          >
             {t("common.viewAll")}
           </Link>
         </div>
@@ -170,14 +154,13 @@ function TransferDetail() {
     );
   }
 
-  const isDecisionTerminal =
-    tx.status === "COMPLETED" ||
-    tx.status === "REJECTED" ||
-    tx.status === "BLOCKED" ||
-    tx.status === "EXPIRED";
   const asset = tx.holding?.asset;
   const registryOutcome = getRegistryOutcome(tx.status);
-  const transferValue = (asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
+  const transferValue =
+    (asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
+
+  const canShowDecisionPanel =
+    canDecide && (tx.status === "PENDING_REVIEW" || tx.status === "APPROVED");
 
   return (
     <AppShell>
@@ -193,7 +176,9 @@ function TransferDetail() {
         <div className="min-w-0">
           <h1 className="flex min-w-0 flex-col gap-1.5 font-display text-2xl font-semibold text-foreground sm:flex-row sm:items-baseline sm:gap-2.5 md:text-3xl">
             <span className="shrink-0">{t("transfer.title")}</span>
-            <span className="hidden shrink-0 font-mono text-sm text-muted-foreground sm:inline">/</span>
+            <span className="hidden shrink-0 font-mono text-sm text-muted-foreground sm:inline">
+              /
+            </span>
             <span
               className="min-w-0 max-w-full truncate font-mono text-sm opacity-80 md:text-base"
               title={tx.id}
@@ -201,11 +186,12 @@ function TransferDetail() {
               {tx.id}
             </span>
           </h1>
+
           <p
             className="mt-1 max-w-full truncate text-sm text-muted-foreground sm:max-w-xl lg:max-w-3xl"
-            title={asset?.name || "Asset"}
+            title={asset?.name || t("common.unknown")}
           >
-            {asset?.name || "Asset"}
+            {asset?.name || t("common.unknown")}
           </p>
         </div>
 
@@ -218,81 +204,111 @@ function TransferDetail() {
         <div className="min-w-0 space-y-6">
           <SectionCard title={t("transfer.assetUnderReview")}>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 2xl:grid-cols-4">
-              <Field label={t("transfers.asset")} value={asset?.name || "N/A"} />
-              <Field label={t("common.type")} value={asset?.type || "N/A"} />
+              <Field
+                label={t("transfers.asset")}
+                value={asset?.name || t("common.unknown")}
+              />
+              <Field
+                label={t("common.type")}
+                value={asset?.type || t("common.unknown")}
+              />
               <Field
                 label={t("transfer.transferValue")}
                 value={fmtCurrency(transferValue)}
                 mono
               />
-              <Field label={t("holdings.units")} value={tx.units.toLocaleString()} mono />
+              <Field
+                label={t("holdings.units")}
+                value={tx.units.toLocaleString(locale)}
+                mono
+              />
             </div>
           </SectionCard>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <SectionCard title={t("transfer.sellerDetails")} className="h-full">
               <PartyCard
-                name="Custodian / Seller"
-                role={`Holding ID: ${tx.holdingId}`}
-                jurisdiction={asset?.location || "Global"}
+                name={tx.holding?.userId || t("common.unknown")}
+                role={`${t("transfer.field.holdingId")}: ${tx.holdingId}`}
+                jurisdiction={asset?.location || t("common.unknown")}
               />
             </SectionCard>
 
             <SectionCard title={t("transfer.buyerDetails")} className="h-full">
               <PartyCard
-                name="Incoming Participant"
-                role="Pending KYC"
-                jurisdiction="Global"
+                name={t("common.unknown")}
+                role={t("common.unavailable")}
+                jurisdiction={t("common.unknown")}
               />
             </SectionCard>
           </div>
 
           <SectionCard title={t("transfer.compliance")}>
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              {(tx.complianceChecks && tx.complianceChecks.length > 0 ? tx.complianceChecks : [
-                { id: '1', checkType: 'Identity verification (eIDV)', status: 'PASSED' },
-                { id: '2', checkType: 'Sanctions & watchlist screening', status: 'PASSED' },
-                { id: '3', checkType: 'Source-of-funds attestation', status: 'PENDING' },
-              ]).map((c: any) => (
-                <li key={c.id} className="flex items-center gap-3 text-sm min-w-0">
-                  <span
-                    className={`flex size-5 shrink-0 items-center justify-center rounded-full ${
-                      c.status === 'PASSED'
-                        ? "bg-success/20 text-success"
-                        : c.status === 'FAILED' ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground"
-                    }`}
+            {tx.complianceChecks && tx.complianceChecks.length > 0 ? (
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                {tx.complianceChecks.map((check) => (
+                  <li
+                    key={check.id}
+                    className="flex min-w-0 items-center gap-3 text-sm"
                   >
-                    {c.status === 'PASSED' ? (
-                      <Check size={12} />
-                    ) : c.status === 'FAILED' ? (
-                      <X size={12} />
-                    ) : (
-                      <span className="size-1.5 rounded-full bg-current" />
-                    )}
-                  </span>
+                    <span
+                      className={cn(
+                        "flex size-5 shrink-0 items-center justify-center rounded-full",
+                        check.status === "PASSED" &&
+                          "bg-success/20 text-success",
+                        check.status === "FAILED" &&
+                          "bg-destructive/20 text-destructive",
+                        check.status !== "PASSED" &&
+                          check.status !== "FAILED" &&
+                          "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {check.status === "PASSED" ? (
+                        <Check size={12} />
+                      ) : check.status === "FAILED" ? (
+                        <X size={12} />
+                      ) : (
+                        <span className="size-1.5 rounded-full bg-current" />
+                      )}
+                    </span>
 
-                  <span
-                    className={cn(
-                      "min-w-0 truncate",
-                      c.status === 'PASSED' ? "text-foreground" : "text-muted-foreground"
-                    )}
-                    title={c.checkType}
-                  >
-                    {c.checkType}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    <span
+                      className={cn(
+                        "min-w-0 truncate",
+                        check.status === "PASSED"
+                          ? "text-foreground"
+                          : "text-muted-foreground",
+                      )}
+                      title={check.checkType}
+                    >
+                      {check.checkType}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {t("transfer.compliance.none")}
+              </p>
+            )}
           </SectionCard>
 
           <SectionCard title={t("transfer.audit")}>
             <ol className="space-y-4">
               {[
-                { time: new Date(tx.requestedAt).toLocaleTimeString(), actor: "System", text: "Transfer request initiated." },
-                { time: new Date(tx.updatedAt).toLocaleTimeString(), actor: "Compliance", text: `Status updated to ${tx.status}.` }
+                {
+                  time: new Date(tx.requestedAt).toLocaleTimeString(locale),
+                  actor: t("transfer.audit.system"),
+                  text: t("transfer.audit.requestInitiated"),
+                },
+                {
+                  time: new Date(tx.updatedAt).toLocaleTimeString(locale),
+                  actor: t("transfer.audit.compliance"),
+                  text: `${t("transfer.audit.statusUpdated")} ${tx.status}.`,
+                },
               ].map((entry, index, arr) => (
                 <li key={index} className="flex gap-4">
-                  <div className="flex flex-col items-center shrink-0">
+                  <div className="flex shrink-0 flex-col items-center">
                     <span className="mt-1.5 size-2 rounded-full bg-secondary" />
                     {index < arr.length - 1 && (
                       <span className="w-px flex-1 bg-border" />
@@ -303,7 +319,7 @@ function TransferDetail() {
                     <p className="font-mono text-[10px] text-muted-foreground">
                       {entry.time} · {entry.actor}
                     </p>
-                    <p className="mt-0.5 text-sm text-foreground break-words">
+                    <p className="mt-0.5 break-words text-sm text-foreground">
                       {entry.text}
                     </p>
                   </div>
@@ -314,88 +330,134 @@ function TransferDetail() {
         </div>
 
         <div className="min-w-0 space-y-6">
-          {canDecide && !isDecisionTerminal && (
-            <SectionCard title={t("transfer.decision")}>
-              {feedback && (
-                <div className={`mb-4 rounded-md p-3 text-xs font-medium ${
-                  feedback.type === "success" ? "bg-success/10 text-success border border-success/20" : "bg-destructive/10 text-destructive border border-destructive/20"
-                }`}>
-                  <div className="flex min-w-0 items-center gap-2">
-                    {feedback.type === "success" ? <Check size={14} /> : <AlertTriangle size={14} />}
-                    <span className="min-w-0 break-words">{feedback.msg}</span>
-                  </div>
-                </div>
+          {feedback && (
+            <div
+              className={cn(
+                "rounded-md border p-3 text-xs font-medium",
+                feedback.type === "success"
+                  ? "border-success/20 bg-success/10 text-success"
+                  : "border-destructive/20 bg-destructive/10 text-destructive",
               )}
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                {feedback.type === "success" ? (
+                  <Check size={14} />
+                ) : (
+                  <AlertTriangle size={14} />
+                )}
+                <span className="min-w-0 break-words">{feedback.msg}</span>
+              </div>
+            </div>
+          )}
 
+          {canShowDecisionPanel && (
+            <SectionCard title={t("transfer.decision")}>
               {showConfirm ? (
-                <div className="space-y-4 rounded-md border border-border bg-muted/30 p-4 animate-in fade-in zoom-in duration-200">
-                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Confirm Action</p>
-                   <p className="text-sm text-foreground font-medium leading-relaxed">Are you sure you want to {showConfirm.label.toLowerCase()} this transfer?</p>
-                   <div className="flex flex-col gap-2 2xl:flex-row">
-                        <button
-                            disabled={actionPending}
-                            onClick={executeAction}
-                            className={cn(
-                                "flex-1 h-9 rounded-md text-[11px] font-bold uppercase tracking-wider transition hover:opacity-90 disabled:opacity-50",
-                                showConfirm.color
-                            )}
-                        >
-                            {actionPending ? <RefreshCw size={14} className="animate-spin mx-auto" /> : "Confirm"}
-                        </button>
-                        <button
-                            disabled={actionPending}
-                            onClick={() => setShowConfirm(null)}
-                            className="flex-1 h-9 rounded-md border border-border bg-card text-[11px] font-bold uppercase tracking-wider transition hover:bg-muted"
-                        >
-                            Cancel
-                        </button>
-                   </div>
+                <div className="animate-in fade-in zoom-in space-y-4 rounded-md border border-border bg-muted/30 p-4 duration-200">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("transfer.confirm.title")}
+                  </p>
+
+                  <p className="text-sm font-medium leading-relaxed text-foreground">
+                    {t("transfer.confirm.body")}
+                  </p>
+
+                  <div className="flex flex-col gap-2 2xl:flex-row">
+                    <button
+                      disabled={actionPending}
+                      onClick={executeAction}
+                      className={cn(
+                        "h-9 flex-1 rounded-md text-[11px] font-bold uppercase tracking-wider transition hover:opacity-90 disabled:opacity-50",
+                        showConfirm.color,
+                      )}
+                    >
+                      {actionPending ? (
+                        <RefreshCw size={14} className="mx-auto animate-spin" />
+                      ) : (
+                        t("common.confirm")
+                      )}
+                    </button>
+
+                    <button
+                      disabled={actionPending}
+                      onClick={() => setShowConfirm(null)}
+                      className="h-9 flex-1 rounded-md border border-border bg-card text-[11px] font-bold uppercase tracking-wider transition hover:bg-muted"
+                    >
+                      {t("common.cancel")}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                    {tx.status === "PENDING_REVIEW" && (
+                  {tx.status === "PENDING_REVIEW" && (
                     <>
-                        <button 
-                        onClick={() => setShowConfirm({ label: t("common.approve"), action: approveTransfer, color: "bg-success text-success-foreground" })}
+                      <button
+                        onClick={() =>
+                          setShowConfirm({
+                            label: t("common.approve"),
+                            action: approveTransfer,
+                            color: "bg-success text-success-foreground",
+                          })
+                        }
                         className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-success text-[11px] font-bold uppercase tracking-wider text-success-foreground transition hover:opacity-90"
-                        >
+                      >
                         <Check size={14} />
                         {t("common.approve")}
-                        </button>
+                      </button>
 
-                        <button 
-                        onClick={() => setShowConfirm({ label: t("common.reject"), action: rejectTransfer, color: "bg-destructive text-destructive-foreground" })}
+                      <button
+                        onClick={() =>
+                          setShowConfirm({
+                            label: t("common.reject"),
+                            action: rejectTransfer,
+                            color:
+                              "bg-destructive text-destructive-foreground",
+                          })
+                        }
                         className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-destructive/40 text-[11px] font-bold uppercase tracking-wider text-destructive transition hover:bg-destructive/10"
-                        >
+                      >
                         <X size={14} />
                         {t("common.reject")}
-                        </button>
+                      </button>
 
-                        <button 
-                        onClick={() => setShowConfirm({ label: t("common.blockAsset"), action: blockTransfer, color: "bg-destructive text-destructive-foreground" })}
+                      <button
+                        onClick={() =>
+                          setShowConfirm({
+                            label: t("common.blockAsset"),
+                            action: blockTransfer,
+                            color:
+                              "bg-destructive text-destructive-foreground",
+                          })
+                        }
                         className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive text-[11px] font-bold uppercase tracking-wider text-destructive-foreground transition hover:opacity-90"
-                        >
+                      >
                         <Ban size={14} />
                         {t("common.blockAsset")}
-                        </button>
+                      </button>
                     </>
-                    )}
+                  )}
 
-                    {tx.status === "APPROVED" && (
-                    <button 
-                        onClick={() => setShowConfirm({ label: t("common.complete"), action: completeTransfer, color: "bg-info text-white" })}
-                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-white text-[11px] font-bold uppercase tracking-wider transition hover:opacity-90"
+                  {tx.status === "APPROVED" && (
+                    <button
+                      onClick={() =>
+                        setShowConfirm({
+                          label: t("common.complete"),
+                          action: completeTransfer,
+                          color: "bg-info text-white",
+                        })
+                      }
+                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-[11px] font-bold uppercase tracking-wider text-white transition hover:opacity-90"
                     >
-                        <ShieldCheck size={14} />
-                        {t("common.complete")}
+                      <ShieldCheck size={14} />
+                      {t("common.complete")}
                     </button>
-                    )}
+                  )}
                 </div>
               )}
 
               {!showConfirm && (
-                <p className="mt-4 text-[10px] leading-relaxed text-muted-foreground italic">
-                    {t("transfer.decision.text")}
+                <p className="mt-4 text-[10px] italic leading-relaxed text-muted-foreground">
+                  {t("transfer.decision.text")}
                 </p>
               )}
             </SectionCard>
@@ -414,21 +476,23 @@ function TransferDetail() {
                 {t(registryOutcome.summaryKey)}
               </p>
 
-              <div className="rounded-md border border-border bg-muted/30 p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("transfer.registryOutcome.nextAction")}
-                </p>
-                <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">
-                  {t(registryOutcome.nextKey)}
-                </p>
-              </div>
+              {registryOutcome.nextKey && (
+                <div className="rounded-md border border-border bg-muted/30 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("transfer.registryOutcome.nextAction")}
+                  </p>
+                  <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">
+                    {t(registryOutcome.nextKey)}
+                  </p>
+                </div>
+              )}
 
               {tx.status === "COMPLETED" && (
                 <>
                   <ul className="space-y-3 text-sm">
                     <Field
                       label={t("holdings.units")}
-                      value={tx.units.toLocaleString()}
+                      value={tx.units.toLocaleString(locale)}
                       mono
                       inline
                     />
@@ -465,7 +529,7 @@ function TransferDetail() {
           <SectionCard title={t("transfer.routing.title")}>
             <ul className="space-y-3 text-sm">
               <Field
-                label="Priority"
+                label={t("common.priority")}
                 value={tx.priority}
                 inline
               />
@@ -474,24 +538,88 @@ function TransferDetail() {
                 value={new Date(tx.requestedAt).toLocaleString(locale)}
                 inline
               />
-               <Field
-                label="Units"
-                value={tx.units.toLocaleString()}
+              <Field
+                label={t("holdings.units")}
+                value={tx.units.toLocaleString(locale)}
                 inline
               />
             </ul>
           </SectionCard>
 
-          <SectionCard title="Holding Status">
+          <SectionCard title={t("transfer.holdingStatus")}>
             <div className="flex min-w-0 items-center gap-3">
-                <Clock size={16} className="shrink-0 text-muted-foreground" />
-                <span className="min-w-0 truncate text-xs font-bold uppercase tracking-widest text-foreground" title={tx.holding?.status || "UNKNOWN"}>{tx.holding?.status || "UNKNOWN"}</span>
+              <Clock size={16} className="shrink-0 text-muted-foreground" />
+              <span
+                className="min-w-0 truncate text-xs font-bold uppercase tracking-widest text-foreground"
+                title={tx.holding?.status || t("common.unknown")}
+              >
+                {tx.holding?.status || t("common.unknown")}
+              </span>
             </div>
           </SectionCard>
         </div>
       </div>
     </AppShell>
   );
+}
+
+function mapStatus(status: string | null | undefined): any {
+  switch (status) {
+    case "PENDING_REVIEW":
+      return "pending";
+    case "APPROVED":
+      return "approved";
+    case "REJECTED":
+      return "rejected";
+    case "BLOCKED":
+      return "blocked";
+    case "EXPIRED":
+      return "expired";
+    case "COMPLETED":
+      return "completed";
+    default:
+      return "pending";
+  }
+}
+
+function getRegistryOutcome(status: string | null | undefined): RegistryOutcome {
+  switch (status) {
+    case "PENDING_REVIEW":
+      return {
+        summaryKey: "transfer.registryOutcome.summary.pending",
+        nextKey: "transfer.registryOutcome.next.pending",
+      };
+    case "APPROVED":
+      return {
+        summaryKey: "transfer.registryOutcome.summary.approved",
+        nextKey: "transfer.registryOutcome.next.approved",
+      };
+    case "COMPLETED":
+      return {
+        summaryKey: "transfer.registryOutcome.summary.completed",
+        nextKey: "transfer.registryOutcome.next.completed",
+      };
+    case "REJECTED":
+      return {
+        summaryKey: "transfer.registryOutcome.summary.rejected",
+        nextKey: null,
+      };
+    case "BLOCKED":
+      return {
+        summaryKey: "transfer.registryOutcome.summary.blocked",
+        nextKey: null,
+      };
+    case "EXPIRED":
+      return {
+        summaryKey: "transfer.registryOutcome.summary.expired",
+        nextKey: null,
+      };
+    default:
+      return {
+        summaryKey: "transfer.registryOutcome.summary.unknown",
+        nextKey: null,
+      };
+  }
 }
 
 function Field({
@@ -508,11 +636,17 @@ function Field({
   if (inline) {
     return (
       <li className="flex min-w-0 items-center justify-between gap-3 border-b border-border pb-2 last:border-0 last:pb-0">
-        <span className="min-w-0 truncate text-[11px] font-medium uppercase tracking-tight text-muted-foreground" title={label}>{label}</span>
+        <span
+          className="min-w-0 truncate text-[11px] font-medium uppercase tracking-tight text-muted-foreground"
+          title={label}
+        >
+          {label}
+        </span>
+
         <span
           className={cn(
             "max-w-[62%] truncate text-right text-xs font-semibold",
-            mono ? "font-mono tabular-nums text-foreground" : "text-foreground"
+            mono ? "font-mono tabular-nums text-foreground" : "text-foreground",
           )}
           title={value}
         >
@@ -524,15 +658,19 @@ function Field({
 
   return (
     <div className="min-w-0">
-      <p className="truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground" title={label}>
+      <p
+        className="truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+        title={label}
+      >
         {label}
       </p>
+
       <p
         className={cn(
           "mt-1.5 text-sm leading-snug",
           mono
             ? "truncate font-mono tabular-nums text-foreground"
-            : "break-words font-semibold text-foreground"
+            : "break-words font-semibold text-foreground",
         )}
         title={value}
       >
@@ -553,20 +691,28 @@ function PartyCard({
 }) {
   return (
     <div className="flex min-w-0 items-start gap-4">
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary/10 font-bold text-secondary text-sm">
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary/10 text-sm font-bold text-secondary">
         {name
           .split(" ")
           .map((part) => part[0])
           .slice(0, 2)
-          .join("")}
+          .join("")
+          .toUpperCase()}
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold text-foreground" title={name}>{name}</p>
+        <p className="truncate text-sm font-bold text-foreground" title={name}>
+          {name}
+        </p>
         <p className="mt-1 break-words font-mono text-[10px] leading-tight text-muted-foreground">
           {role}
         </p>
-        <p className="mt-2 truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80" title={jurisdiction}>{jurisdiction}</p>
+        <p
+          className="mt-2 truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80"
+          title={jurisdiction}
+        >
+          {jurisdiction}
+        </p>
       </div>
     </div>
   );
