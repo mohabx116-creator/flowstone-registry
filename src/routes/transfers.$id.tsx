@@ -277,10 +277,15 @@ function TransferDetail() {
   const transferValue =
     (asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
   const auditEntries = getDerivedAuditEntries(tx, t, locale);
+  const allComplianceChecksPassed = areAllComplianceChecksPassed(tx);
   const recipientName = getTransferUserDisplayName(tx.recipient);
   const recipientRole = tx.recipient
     ? `${tx.recipient.email} / ${tx.recipient.role}`
     : t("transfer.recipientUnavailable");
+  const sourceOwnerName = getTransferUserDisplayName(tx.holding?.user);
+  const sourceOwnerRole = tx.holding?.user
+    ? `${tx.holding.user.email} / ${tx.holding.user.role}`
+    : `${t("transfer.field.holdingId")}: ${tx.holdingId}`;
 
   const canShowDecisionPanel =
     canDecide && (tx.status === "PENDING_REVIEW" || tx.status === "APPROVED");
@@ -351,8 +356,8 @@ function TransferDetail() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <SectionCard title={t("transfer.sellerDetails")} className="h-full">
               <PartyCard
-                name={tx.holding?.userId || t("common.unknown")}
-                role={`${t("transfer.field.holdingId")}: ${tx.holdingId}`}
+                name={sourceOwnerName || tx.holding?.userId || t("common.unknown")}
+                role={sourceOwnerRole}
                 jurisdiction={asset?.location || t("common.unknown")}
               />
             </SectionCard>
@@ -648,19 +653,42 @@ function TransferDetail() {
                   )}
 
                   {tx.status === "APPROVED" && (
-                    <button
-                      onClick={() =>
-                        setShowConfirm({
-                          label: t("common.complete"),
-                          action: completeTransfer,
-                          color: "bg-info text-white",
-                        })
-                      }
-                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-[11px] font-bold uppercase tracking-wider text-white transition hover:opacity-90"
-                    >
-                      <ShieldCheck size={14} />
-                      {t("common.complete")}
-                    </button>
+                    <>
+                      <div
+                        className={cn(
+                          "rounded-md border p-3 text-xs leading-relaxed",
+                          allComplianceChecksPassed
+                            ? "border-success/20 bg-success/10 text-success"
+                            : "border-warning/30 bg-warning/10 text-warning-foreground",
+                        )}
+                      >
+                        <p className="font-bold uppercase tracking-wider">
+                          {allComplianceChecksPassed
+                            ? t("transfer.settlement.ready")
+                            : t("transfer.settlement.notReady")}
+                        </p>
+                        <p className="mt-1 text-muted-foreground">
+                          {allComplianceChecksPassed
+                            ? t("transfer.settlement.readyBody")
+                            : t("transfer.settlement.notReadyBody")}
+                        </p>
+                      </div>
+
+                      <button
+                        disabled={!allComplianceChecksPassed}
+                        onClick={() =>
+                          setShowConfirm({
+                            label: t("common.complete"),
+                            action: completeTransfer,
+                            color: "bg-info text-white",
+                          })
+                        }
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-info text-[11px] font-bold uppercase tracking-wider text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <ShieldCheck size={14} />
+                        {t("common.complete")}
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -945,7 +973,10 @@ function isUnauthorizedMessage(message: string) {
 }
 
 function getTransferUserDisplayName(
-  user: Transfer["recipient"] | undefined,
+  user:
+    | Transfer["recipient"]
+    | NonNullable<Transfer["holding"]>["user"]
+    | undefined,
 ) {
   if (!user) {
     return "";
@@ -953,6 +984,11 @@ function getTransferUserDisplayName(
 
   const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
   return name || user.email;
+}
+
+function areAllComplianceChecksPassed(tx: Transfer) {
+  const checks = tx.complianceChecks ?? [];
+  return checks.length > 0 && checks.every((check) => check.status === "PASSED");
 }
 
 function MetaLine({ label, value }: { label: string; value: string }) {

@@ -178,6 +178,10 @@ export const ar: Record<string, string> = {
   "transfer.field.holdingId": "معرّف الحيازة",
   "transfer.field.priority": "الأولوية",
   "transfer.field.holdingStatus": "حالة الحيازة",
+  "transfer.settlement.ready": "جاهز للتسوية",
+  "transfer.settlement.readyBody": "اجتازت جميع فحوصات الامتثال. يمكن للسجل إكمال التسوية.",
+  "transfer.settlement.notReady": "غير جاهز للتسوية",
+  "transfer.settlement.notReadyBody": "يجب أن تكون جميع فحوصات الامتثال بحالة اجتاز قبل إكمال هذا التحويل.",
 
   "transfer.confirm.title": "تأكيد الإجراء",
   "transfer.confirm.body": "هل أنت متأكد أنك تريد تنفيذ هذا الإجراء على التحويل؟",
@@ -232,6 +236,7 @@ export const ar: Record<string, string> = {
   "holding.loading": "جاري تحميل المحفظة...",
   "holding.errorTitle": "خطأ في تحميل الحيازات",
   "holding.eligible": "مؤهل",
+  "holding.status.releasedNotice": "الحيازات المحررة لم تعد قابلة للتحويل.",
 
   "holding.audit.kycTitle": "التحقق من الهوية (KYC) ساري",
   "holding.audit.kycSub": "تمت إعادة التحقق منذ 12 يوم",
@@ -299,6 +304,7 @@ export const ar: Record<string, string> = {
   "holdings.title": "حيازات المحفظة",
   "holdings.subtitle": "إدارة ومراقبة مراكز الأصول المسجلة الخاصة بك.",
   "holdings.asset": "الأصل",
+  "holdings.owner": "المالك",
   "holdings.units": "الوحدات",
   "holdings.ownership": "نسبة الملكية",
   "holdings.acquired": "تاريخ الاستحواذ",

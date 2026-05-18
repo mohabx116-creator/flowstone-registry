@@ -76,6 +76,10 @@ function HoldingsPage() {
     }, 0);
   }, [holdings]);
 
+  const activeHoldingsCount = holdings.filter(
+    (holding) => holding.status === "ACTIVE",
+  ).length;
+
   const mapStatus = (status: string): any => {
     switch (status) {
       case 'ACTIVE': return 'completed';
@@ -138,7 +142,7 @@ function HoldingsPage() {
         <StatCard
           icon={<Layout size={16} />}
           label={t("holdings.summary.activeHoldings")}
-          value={String(holdings.length)}
+          value={String(activeHoldingsCount)}
         />
         <StatCard
           icon={<TrendingUp size={16} />}
@@ -176,6 +180,7 @@ function HoldingsPage() {
               <tr className="whitespace-nowrap border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
                 <th className="px-5 py-3 text-start font-semibold">{t("holding.registryId")}</th>
                 <th className="px-5 py-3 text-start font-semibold">{t("holdings.asset")}</th>
+                <th className="px-5 py-3 text-start font-semibold">{t("holdings.owner")}</th>
                 <th className="px-5 py-3 text-start font-semibold">{t("holdings.units")}</th>
                 <th className="px-5 py-3 text-start font-semibold">{t("holdings.ownership")}</th>
                 <th className="px-5 py-3 text-start font-semibold">{t("common.value")}</th>
@@ -187,16 +192,29 @@ function HoldingsPage() {
             <tbody className="divide-y divide-border whitespace-nowrap">
               {filtered.map((h) => {
                 const value = (h.asset?.valuation || 0) * (h.ownershipPercentage / 100);
+                const ownerName = getHoldingOwnerName(h) || t("common.unavailable");
+                const isReleased = h.status === "RELEASED";
+
                 return (
                   <tr
                     key={h.id}
                     onClick={() => navigate({ to: "/holdings/$id", params: { id: h.id } })}
-                    className="cursor-pointer transition-colors hover:bg-muted/40"
+                    className={`cursor-pointer transition-colors hover:bg-muted/40 ${
+                      isReleased ? "bg-muted/25 text-muted-foreground" : ""
+                    }`}
                   >
                     <td className="px-5 py-3 font-mono text-xs text-foreground">{h.id}</td>
                     <td className="px-5 py-3">
                       <div className="font-medium text-foreground">{h.asset?.name || t("common.unknown")}</div>
                       <div className="text-[10px] text-muted-foreground uppercase">{h.asset?.type || t("common.unknown")}</div>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="max-w-44 truncate text-xs font-medium text-foreground" title={ownerName}>
+                        {ownerName}
+                      </div>
+                      <div className="max-w-44 truncate text-[10px] text-muted-foreground" title={h.user?.email || t("common.unavailable")}>
+                        {h.user?.email || t("common.unavailable")}
+                      </div>
                     </td>
                     <td className="px-5 py-3 font-mono tabular-nums text-muted-foreground">
                       {h.units.toLocaleString()}
@@ -209,6 +227,11 @@ function HoldingsPage() {
                     </td>
                     <td className="px-5 py-3">
                       <StatusBadge status={mapStatus(h.status)} />
+                      {isReleased && (
+                        <div className="mt-1 text-[10px] font-medium text-muted-foreground">
+                          {t("holding.status.releasedNotice")}
+                        </div>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-xs text-muted-foreground">
                       {new Date(h.acquiredAt).toLocaleDateString()}
@@ -228,7 +251,7 @@ function HoldingsPage() {
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-20 text-center">
+                  <td colSpan={9} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Wallet size={32} className="text-muted-foreground/30" />
                       <p className="text-muted-foreground">{t("common.noResults")}</p>
@@ -242,4 +265,17 @@ function HoldingsPage() {
       </SectionCard>
     </AppShell>
   );
+}
+
+function getHoldingOwnerName(holding: Holding) {
+  if (!holding.user) {
+    return null;
+  }
+
+  const name = [holding.user.firstName, holding.user.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return name || holding.user.email;
 }

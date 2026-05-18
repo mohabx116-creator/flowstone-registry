@@ -165,6 +165,7 @@ function HoldingDetail() {
         subtitle={`${t("holding.title")} · ${h.asset?.type || t("common.unknown")}`}
         actions={
           <button 
+            disabled={!canSubmitHolding}
             onClick={() => {
                 setShowModal(true);
                 setUnits(String(h.units));
@@ -174,7 +175,8 @@ function HoldingDetail() {
                 setSubmitError(null);
                 setSubmitSuccess(null);
             }}
-            className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90"
+            title={holdingWarning || t("common.requestTransfer")}
+            className="inline-flex h-9 items-center gap-2 rounded-md bg-secondary px-4 text-xs font-semibold uppercase tracking-wider text-secondary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t("common.requestTransfer")}
           </button>
@@ -183,6 +185,12 @@ function HoldingDetail() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-8">
+          {h.status === "RELEASED" && (
+            <div className="rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+              {t("holding.status.releasedNotice")}
+            </div>
+          )}
+
           <SectionCard title={t("holding.assetInfo")}>
             <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
               <Info label={t("holding.registryId")} value={h.id} mono />
