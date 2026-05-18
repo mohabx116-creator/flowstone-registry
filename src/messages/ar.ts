@@ -216,6 +216,7 @@ export const ar: Record<string, string> = {
   "transfer.registryOutcome.next.expired": "لا يتوفر أي إجراء إضافي.",
   "transfer.registryOutcome.ledgerNote":
     "حالة التسوية مشتقة من حالة التحويل. تعديل سجل الملكية يتحكم به النظام الخلفي ولا يظهر مباشرة في هذا العرض.",
+  "transfer.recipientUnavailable": "تفاصيل المستلم غير متاحة لهذا التحويل القديم.",
 
   "holding.title": "تفاصيل الحيازة",
   "holding.registryId": "معرّف السجل",
@@ -259,6 +260,10 @@ export const ar: Record<string, string> = {
   "holding.transfer.unitsLabel": "الوحدات المطلوب تحويلها",
   "holding.transfer.unitsPlaceholder": "أدخل عدد الوحدات",
   "holding.transfer.remainingUnits": "الوحدات المتبقية",
+  "holding.transfer.recipientEmailLabel": "بريد المستلم",
+  "holding.transfer.recipientEmailPlaceholder": "buyer@flowstone.dev",
+  "holding.transfer.recipientEmailHelp": "أدخل بريد مستخدم موجود في السجل لاستلام الوحدات.",
+  "holding.transfer.recipientConfirmLabel": "المستلم",
   "holding.transfer.priorityLabel": "الأولوية",
   "holding.transfer.priority.NORMAL": "عادية",
   "holding.transfer.priority.HIGH": "مرتفعة",
@@ -281,6 +286,8 @@ export const ar: Record<string, string> = {
   "holding.transfer.error.unavailable": "لا تحتوي هذه الحيازة على وحدات متاحة للتحويل.",
   "holding.transfer.error.inactive": "هذه الحيازة غير قابلة للتحويل حاليا.",
   "holding.transfer.error.priority": "اختر أولوية صالحة.",
+  "holding.transfer.error.recipientEmailRequired": "أدخل بريد المستلم.",
+  "holding.transfer.error.recipientEmailInvalid": "أدخل بريد مستلم صالحا.",
   "holding.transfer.warning.unknownStatus": "حالة هذه الحيازة غير معروفة للواجهة. قد تقبل واجهة برمجة السجل الطلب أو ترفضه.",
   "holding.transfer.redirectFallback": "تم إرسال طلب التحويل، لكن واجهة البرمجة لم ترجع معرّف تفاصيل التحويل لفتحه تلقائيا.",
 

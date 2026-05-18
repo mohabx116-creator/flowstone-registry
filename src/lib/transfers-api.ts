@@ -16,6 +16,14 @@ export type ComplianceCheck = {
   updatedAt: string;
 };
 
+export type TransferUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+};
+
 export type TransferAsset = {
   id: string;
   name: string;
@@ -41,11 +49,13 @@ export type TransferHolding = {
   createdAt: string;
   updatedAt: string;
   asset?: TransferAsset;
+  user?: TransferUser;
 };
 
 export type Transfer = {
   id: string;
   holdingId: string;
+  recipientUserId?: string | null;
   units: number;
   status: TransferStatus;
   priority: TransferPriority;
@@ -53,12 +63,14 @@ export type Transfer = {
   completedAt?: string | null;
   updatedAt: string;
   holding?: TransferHolding;
+  recipient?: TransferUser | null;
   complianceChecks?: ComplianceCheck[];
 };
 
 export type CreateTransferPayload = {
   holdingId: string;
   units: number;
+  recipientEmail: string;
   priority?: TransferPriority;
 };
 

@@ -37,6 +37,7 @@ function HoldingDetail() {
   // Transfer Modal State
   const [showModal, setShowModal] = useState(false);
   const [units, setUnits] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
   const [priority, setPriority] = useState<TransferPriority>("NORMAL");
   const [step, setStep] = useState<TransferStep>("details");
   const [submitting, setSubmitting] = useState(false);
@@ -65,7 +66,13 @@ function HoldingDetail() {
     e.preventDefault();
     if (!h) return;
 
-    const validation = validateTransferRequest(units, h.units, priority, t);
+    const validation = validateTransferRequest(
+      units,
+      h.units,
+      priority,
+      recipientEmail,
+      t,
+    );
     if (!validation.valid) {
       setSubmitError(validation.message);
       return;
@@ -84,6 +91,7 @@ function HoldingDetail() {
       const tx = await createTransfer({
         holdingId: h.id,
         units: validation.units,
+        recipientEmail: validation.recipientEmail,
         priority
       });
       setShowModal(false);
@@ -160,6 +168,7 @@ function HoldingDetail() {
             onClick={() => {
                 setShowModal(true);
                 setUnits(String(h.units));
+                setRecipientEmail("");
                 setPriority("NORMAL");
                 setStep("details");
                 setSubmitError(null);
@@ -285,7 +294,10 @@ function HoldingDetail() {
                     <button
                       type="button"
                       disabled={submitting}
-                      onClick={() => setShowModal(false)}
+                      onClick={() => {
+                        setShowModal(false);
+                        setRecipientEmail("");
+                      }}
                       className="text-muted-foreground hover:text-foreground disabled:opacity-50"
                     >
                         <X size={20} />
@@ -354,6 +366,25 @@ function HoldingDetail() {
                         </div>
 
                         <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("holding.transfer.recipientEmailLabel")}</label>
+                            <input
+                                type="email"
+                                value={recipientEmail}
+                                onChange={(e) => {
+                                  setRecipientEmail(e.target.value);
+                                  setSubmitError(null);
+                                  setSubmitSuccess(null);
+                                }}
+                                placeholder={t("holding.transfer.recipientEmailPlaceholder")}
+                                disabled={submitting || !canSubmitHolding}
+                                className="h-10 w-full bg-muted/60 border border-transparent focus:border-secondary focus:bg-background rounded-md px-3 text-sm outline-none transition disabled:opacity-50"
+                            />
+                            <p className="text-[10px] leading-relaxed text-muted-foreground">
+                              {t("holding.transfer.recipientEmailHelp")}
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("holding.transfer.priorityLabel")}</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {transferPriorities.map((p) => (
@@ -384,7 +415,13 @@ function HoldingDetail() {
                             type="button"
                             disabled={submitting || !canSubmitHolding}
                             onClick={() => {
-                              const validation = validateTransferRequest(units, h.units, priority, t);
+                              const validation = validateTransferRequest(
+                                units,
+                                h.units,
+                                priority,
+                                recipientEmail,
+                                t,
+                              );
                               if (!validation.valid) {
                                 setSubmitError(validation.message);
                                 return;
@@ -408,6 +445,7 @@ function HoldingDetail() {
                             <SummaryItem label={t("holding.transfer.unitsLabel")} value={parsedUnits !== null ? parsedUnits.toLocaleString() : t("common.unavailable")} mono />
                             <SummaryItem label={t("holding.transfer.remainingUnits")} value={remainingUnits !== null && remainingUnits >= 0 ? remainingUnits.toLocaleString() : t("common.unavailable")} mono />
                             <SummaryItem label={t("holding.transfer.priorityLabel")} value={t(`holding.transfer.priority.${priority}`)} />
+                            <SummaryItem label={t("holding.transfer.recipientConfirmLabel")} value={recipientEmail.trim() || t("common.unavailable")} />
                             <SummaryItem label={t("holding.transfer.holdingId")} value={h.id} mono />
                           </div>
                         </div>
@@ -454,9 +492,13 @@ function validateTransferRequest(
   units: string,
   availableUnits: number,
   priority: TransferPriority,
+  recipientEmail: string,
   t: (key: string) => string,
-): { valid: true; units: number } | { valid: false; message: string } {
+):
+  | { valid: true; units: number; recipientEmail: string }
+  | { valid: false; message: string } {
   const trimmed = units.trim();
+  const trimmedRecipientEmail = recipientEmail.trim();
 
   if (!trimmed) {
     return { valid: false, message: t("holding.transfer.error.required") };
@@ -483,7 +525,25 @@ function validateTransferRequest(
     return { valid: false, message: t("holding.transfer.error.priority") };
   }
 
-  return { valid: true, units: parsed };
+  if (!trimmedRecipientEmail) {
+    return {
+      valid: false,
+      message: t("holding.transfer.error.recipientEmailRequired"),
+    };
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedRecipientEmail)) {
+    return {
+      valid: false,
+      message: t("holding.transfer.error.recipientEmailInvalid"),
+    };
+  }
+
+  return {
+    valid: true,
+    units: parsed,
+    recipientEmail: trimmedRecipientEmail,
+  };
 }
 
 function SummaryItem({

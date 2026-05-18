@@ -277,6 +277,10 @@ function TransferDetail() {
   const transferValue =
     (asset?.valuation || 0) * (tx.units / (tx.holding?.units || 1));
   const auditEntries = getDerivedAuditEntries(tx, t, locale);
+  const recipientName = getTransferUserDisplayName(tx.recipient);
+  const recipientRole = tx.recipient
+    ? `${tx.recipient.email} / ${tx.recipient.role}`
+    : t("transfer.recipientUnavailable");
 
   const canShowDecisionPanel =
     canDecide && (tx.status === "PENDING_REVIEW" || tx.status === "APPROVED");
@@ -355,9 +359,9 @@ function TransferDetail() {
 
             <SectionCard title={t("transfer.buyerDetails")} className="h-full">
               <PartyCard
-                name={t("common.unknown")}
-                role={t("common.unavailable")}
-                jurisdiction={t("common.unknown")}
+                name={recipientName || t("transfer.recipientUnavailable")}
+                role={recipientRole}
+                jurisdiction={asset?.location || t("common.unknown")}
               />
             </SectionCard>
           </div>
@@ -938,6 +942,17 @@ function isUnauthorizedMessage(message: string) {
     normalized.includes("unauthorized") ||
     normalized.includes("forbidden")
   );
+}
+
+function getTransferUserDisplayName(
+  user: Transfer["recipient"] | undefined,
+) {
+  if (!user) {
+    return "";
+  }
+
+  const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  return name || user.email;
 }
 
 function MetaLine({ label, value }: { label: string; value: string }) {
