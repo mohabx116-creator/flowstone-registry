@@ -740,6 +740,11 @@ function TransferDetail() {
                       mono
                       inline
                     />
+                    <Field
+                      label={t("transfer.buyerDetails")}
+                      value={recipientName || t("transfer.recipientUnavailable")}
+                      inline
+                    />
                     {asset?.name && (
                       <Field
                         label={t("transfers.asset")}
