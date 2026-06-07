@@ -139,8 +139,13 @@ export function Sidebar({
             <p className="truncate text-sm font-semibold text-white">
               {displayName}
             </p>
-            <p className="truncate text-xs text-sidebar-foreground/70">
-              {displayRole}
+            <p className="truncate text-xs text-sidebar-foreground/70 flex items-center gap-1.5">
+              <span>{displayRole}</span>
+              {import.meta.env.VITE_DEMO_AUTO_LOGIN === 'true' && (
+                <span className="rounded bg-secondary/20 px-1 py-0.5 text-[8px] font-semibold text-secondary uppercase tracking-wider">
+                  Demo
+                </span>
+              )}
             </p>
           </div>
         </div>

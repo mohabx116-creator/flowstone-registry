@@ -30,6 +30,9 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
     : 'FS';
 
   const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('flowstone_demo_logout', 'true');
+    }
     clearStoredAuth();
     setUser(null);
     navigate({ to: '/' });
@@ -111,6 +114,12 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
         >
           <LogOut size={18} />
         </button>
+
+        {import.meta.env.VITE_DEMO_AUTO_LOGIN === 'true' && (
+          <span className="hidden rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-semibold text-secondary border border-secondary/20 sm:inline-block ltr:ml-2 rtl:mr-2">
+            Demo Active
+          </span>
+        )}
 
         <div className="flex size-9 items-center justify-center rounded-full bg-secondary/20 text-xs font-bold uppercase text-foreground ring-1 ring-secondary/40 ltr:ml-2 rtl:mr-2">
           {initials}
